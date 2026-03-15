@@ -5,12 +5,46 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 body {
   background-color: #F8FAFB;
   color: #2D3436;
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 ::-webkit-scrollbar {
   display: none;
+}
+
+/* Prevent pull-to-refresh on mobile */
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* PWA standalone mode adjustments */
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Prevent iOS input zoom */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Scrollbar hide for Firefox */
+* {
+  scrollbar-width: none;
 }
