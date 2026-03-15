@@ -1,163 +1,133 @@
-# OpenClaw Web 接入任务清单
+# OpenClaw 聊天客户端 — 功能实现对比
 
-本文档用于整理 **当前 Web React 项目（排除 miniprogram/）接入 clawdbot-generic-channel** 的全部工作事项，作为实施与对齐依据。
+> 最后更新：2026-03-15
 
----
+## 项目结构
 
-## 一、目标
-
-- Web React 项目通过 **generic-channel (WebSocket)** 接入 OpenClaw
-- 支持：
-  - 用户登录后携带 `userId`
-  - 建立 `chatId` 会话
-  - 与 OpenClaw Bot 进行实时消息收发
-- 测试环境：
-  - WS：`ws://wolf-sg.southeastasia.cloudapp.azure.com:18080/ws`
+| 目录 | 端 | 技术栈 |
+|------|---|--------|
+| `src/` | Web | React 19 + TypeScript + shadcn/ui + Tailwind + Motion |
+| `miniprogram/` | 微信小程序 | WXML + WXSS + 原生 JS |
 
 ---
 
-## 二、整体原则
+## 协议实现
 
-- ✅ 不影响 `miniprogram/`
-- ✅ 最大限度复用现有 UI / 交互
-- ✅ 不引入多余状态管理（Redux / Zustand）
-- ✅ 渐进式引入 `react-router-dom`（Hybrid Routing）
-
----
-
-## 三、接入协议要点（generic-channel）
-
-### 1. 连接方式
-
-```text
-ws://<host>:18080/ws?chatId=<chatId>
-```
-
-### 2. 前端 → OpenClaw
-
-事件：`message.receive`
-
-```json
-{
-  "type": "message.receive",
-  "data": {
-    "messageId": "uuid",
-    "chatId": "chat-123",
-    "chatType": "direct",
-    "senderId": "user-001",
-    "senderName": "Test User",
-    "content": "hello",
-    "timestamp": 1710000000000
-  }
-}
-```
-
-### 3. OpenClaw → 前端
-
-事件：`message.send`
+| 协议事件 | 方向 | Web | 小程序 |
+|---------|------|-----|--------|
+| `connection.open` | ← | ✅ | ✅ |
+| `history.sync` (direction) | ← | ✅ | ✅ |
+| `message.receive` (带 agentId/parentId) | → | ✅ | ✅ |
+| `message.send` (带 replyTo) | ← | ✅ | ✅ |
+| `thinking.start` | ← | ✅ | ✅ |
+| `thinking.update` | ← | ✅ | ✅ |
+| `thinking.end` | ← | ✅ | ✅ |
+| `agent.list.get` → `agent.list` | ↔ | ✅ | ✅ |
+| `agent.select` → `agent.selected` | ↔ | ✅ (API ready) | ✅ (API ready) |
+| `reaction.add` | ↔ | ✅ | ✅ |
+| `reaction.remove` | ↔ | ✅ | ✅ |
+| `channel.status.get` → `channel.status` | ↔ | ✅ | ✅ |
+| `agentId` in WebSocket URL | → | ✅ | ✅ |
+| `token` in WebSocket URL | → | ✅ | ✅ |
+| Image/Voice/Audio media (`mediaUrl`) | → | ✅ | ❌ |
 
 ---
 
-## 四、当前项目现状
+## 功能对比
 
-- ✅ 已有聊天页面：`src/screens/ChatRoom.tsx`
-- ✅ 使用自研 Screen 状态路由（非 react-router）
-- ✅ 已接入 generic-channel WebSocket 通信
-- ✅ 已实现 userId 生成与持久化
+### 核心聊天
 
----
+| 功能 | Web | 小程序 |
+|------|-----|--------|
+| WebSocket 实时消息收发 | ✅ | ✅ |
+| Token 认证连接 | ✅ | ✅ |
+| chatId/senderId 绑定 | ✅ | ✅ |
+| 历史消息加载 | ✅ | ✅ |
+| 消息持久化 (localStorage) | ✅ | ❌ (依赖 app-state 内存) |
+| Thinking 指示器动画 | ✅ 三点跳动 | ✅ 三点跳动 + 文字 |
+| 断线自动重连 (指数退避 6次) | ✅ | ✅ |
+| 消息时间显示 (HH:MM) | ✅ | ✅ |
+| 日期分割线 (Today/Yesterday/日期) | ✅ | ✅ |
 
-## 五、实施任务拆解
+### 消息类型
 
-### ✅ 1. 路由改造（Hybrid Routing）
+| 功能 | Web | 小程序 |
+|------|-----|--------|
+| 文本消息 | ✅ | ✅ |
+| Markdown 渲染 (AI 回复) | ✅ react-markdown | ✅ 自写解析器 (heading/bold/code/list/blockquote/link/hr) |
+| 图片消息发送 | ✅ 选图→base64→mediaUrl | ❌ |
+| 语音消息录制发送 | ✅ MediaRecorder→webm→mediaUrl | ❌ |
 
-目标：
-- 保留现有 `Screen` 状态路由
-- 引入 `react-router-dom` 作为 URL 同步层
+### 交互功能
 
-任务：
-- 安装 `react-router-dom`
-- `App.tsx`：
-  - 外层包裹 `BrowserRouter`
-  - URL ⇄ currentScreen 双向同步
-  - 支持 `/chat/:chatId` 深链接
+| 功能 | Web | 小程序 |
+|------|-----|--------|
+| 斜杠命令 (13个官方命令) | ✅ 实时过滤 | ✅ 实时过滤 |
+| 独立命令直接发送 | ✅ | ✅ |
+| 快捷命令栏 (输入框上方) | ✅ /status /models /help /new /reset | ✅ 同上 |
+| Emoji 表情发送 | ✅ 直接发送 | ✅ 空输入快速发送，有输入拼接 |
+| Emoji reaction (协议) | ✅ reaction.add/remove | ✅ reaction.add/remove |
+| 引用回复 (parentId) | ✅ 回复按钮 + 回复栏 + 引用块 | ✅ 回复按钮 + 回复栏 |
+| AI 回复引用显示 (replyTo) | ✅ 气泡内引用块 | ❌ |
+| 交互卡片 (providers/models/think) | ✅ ActionCard 自动检测 | ✅ action-card + action-chip |
 
----
+### 多 Agent
 
-### ✅ 2. 用户身份（最小登录）
+| 功能 | Web | 小程序 |
+|------|-----|--------|
+| Agent 列表动态获取 | ✅ agent.list.get | ✅ agent.list.get |
+| Agent 缓存 + 手动刷新 | ✅ localStorage + 🔄按钮 | ✅ wx.Storage + 🔄按钮 |
+| Agent emoji 头像 | ✅ 消息气泡 + header | ✅ 消息气泡 + header |
+| Agent model 信息显示 | ✅ | ✅ |
+| Agent 切换 (agent.select) | ✅ API ready | ✅ API ready |
 
-目标：
-- 在 Web 端生成并持久化 `userId`
+### 多服务器管理
 
-任务：
-- 复用 `Onboarding` 或新增简单登录页
-- 登录成功后：
-  - 生成 `userId`
-  - 保存到 `localStorage`
+| 功能 | Web | 小程序 |
+|------|-----|--------|
+| 添加服务器 (Pairing) | ✅ name/displayName/URL/token/chatId/senderId | ✅ 同上 |
+| 服务器列表 (Profile) | ✅ | ✅ |
+| 切换活跃服务器 | ✅ 点击激活 (绿勾) | ✅ 点击激活 (✓) |
+| 编辑服务器 | ✅ 底部弹窗 6字段编辑 | ✅ 底部弹窗 6字段编辑 |
+| 删除服务器 | ✅ | ✅ |
 
----
+### 页面清单
 
-### ✅ 3. WebSocket 通道封装（核心）
+| 页面 | Web | 小程序 |
+|------|-----|--------|
+| Onboarding (4卡轮播) | ✅ | ✅ |
+| Pairing (连接配置) | ✅ | ✅ |
+| ChatList / Agents (Agent列表) | ✅ | ✅ |
+| ChatRoom (聊天) | ✅ | ✅ |
+| Dashboard (channel.status) | ✅ 实时刷新 | ✅ 实时刷新 |
+| Search | ✅ 空态 | ✅ 空态 |
+| Profile (服务器管理+设置) | ✅ | ✅ |
+| Preferences | ✅ | ✅ |
 
-文件：
-- `src/services/clawChannel.ts`
+### UI 组件库
 
-职责：
-- 创建 / 维护 WebSocket 连接
-- 发送 `message.receive`
-- 监听 `message.send`
-- 对外提供：
-  - `sendMessage(content)`
-  - `onMessage(callback)`
-
----
-
-### ✅ 4. ChatRoom 接入真实通信
-
-文件：
-- `src/screens/ChatRoom.tsx`
-
-任务：
-- 移除：
-  - `mockMessages`
-  - `setTimeout` mock AI
-- 接入：
-  - clawChannel 消息回调
-  - 真实 bot 回复渲染
-- UI / 动画 / 交互 **不改**
-
----
-
-### ✅ 5. 状态职责划分
-
-| 状态 | 归属 |
-|----|----|
-| userId | localStorage + App |
-| chatId | URL / Screen 状态 |
-| WS 连接 | clawChannel service |
-| 消息列表 | ChatRoom 内部 |
-
----
-
-## 六、验证方式
-
-1. 启动 Web 项目
-2. 进入 Onboarding / 登录
-3. 打开 ChatRoom
-4. 确认：
-   - WebSocket 成功连接
-   - 发送消息 → OpenClaw
-   - 收到 bot 回复
+| 组件 | Web | 小程序 |
+|------|-----|--------|
+| Button (cva variants) | ✅ shadcn | ✅ 原生 wxss |
+| Input | ✅ shadcn | ✅ 原生 |
+| Card / GlassCard | ✅ shadcn | ✅ glass-card 组件 |
+| Badge | ✅ shadcn | ✅ 原生 |
+| BottomNav | ✅ GlassCard + motion | ✅ bottom-nav 组件 |
+| message-bubble | ✅ 内联 JSX + Markdown | ✅ 组件 + 自写 MD |
+| floating-panel | ✅ AnimatePresence | ✅ 组件 |
+| emoji-picker | ✅ 内联 | ✅ 组件 |
+| ActionCard | ✅ 组件 | ✅ 内联 WXML |
 
 ---
 
-## 七、后续可扩展（非本次范围）
+## 待办
 
-- 多会话 / ChatList 历史同步
-- 鉴权 token
-- 群聊 / 多 bot
-- 与 miniprogram 共用后端逻辑
-
----
+| 优先级 | 事项 | 备注 |
+|--------|------|------|
+| 🟡 中 | 小程序图片/语音发送 | 选图→base64/录音→base64 |
+| 🟡 中 | 小程序 AI 回复引用显示 | message-bubble 渲染 replyTo 引用块 |
+| 🟡 中 | 小程序消息 localStorage 持久化 | 当前依赖内存 + history.sync |
+| 🟢 低 | 多端实时同步 | 需服务端支持 |
+| 🟢 低 | history.sync 按 agentId 隔离 | 需服务端插件更新 |
 
 > 本文档用于当前阶段实施，不作为最终架构文档。
