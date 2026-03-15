@@ -23,8 +23,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // Skip non-GET and WebSocket requests
+  // Skip non-GET, non-http(s), and WebSocket requests
   if (request.method !== 'GET' || request.url.includes('/ws')) return;
+  if (!request.url.startsWith('http')) return;
 
   // Network-first for navigation, cache-first for assets
   if (request.mode === 'navigate') {
