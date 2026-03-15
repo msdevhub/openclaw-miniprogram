@@ -225,6 +225,7 @@ Page({
     quickCommands: QUICK_COMMANDS,
     agentEmoji: '🤖',
     agentName: '',
+    isRecording: false,
     genericSenderId: '',
     genericConnectionStatus: 'disconnected',
     genericConnectionStatusText: 'Offline',
@@ -260,13 +261,21 @@ Page({
       }
     } catch (e) {}
 
+    this.genericClient = null;
+    this.pageVisible = true;
+    this.activeConn = activeConn;
+
+    // Load persisted messages first, then fall back to app-state
+    var persistedMsgs = this._loadPersistedMessages();
+    var initialMsgs = persistedMsgs.length > 0 ? persistedMsgs : getMessages(conversationId);
+
     this.setData({
       ...getPageChromeData(),
       activeChatId: agentId,
       activeChat: { id: agentId, name: agentName, isGroup: false },
       activeConversationId: conversationId,
-      messages: getMessages(conversationId),
-      displayMessages: addDateSeparators(getMessages(conversationId)),
+      messages: initialMsgs,
+      displayMessages: addDateSeparators(initialMsgs),
       genericSenderId: connection.senderId,
       agentEmoji,
       agentName,
@@ -274,9 +283,6 @@ Page({
       this.scrollChatToBottom();
     });
 
-    this.genericClient = null;
-    this.pageVisible = true;
-    this.activeConn = activeConn;
     clearAgentUnread(agentId);
     this.connectAgentChannel(true);
   },
@@ -329,6 +335,8 @@ Page({
     this.setData({ messages, displayMessages: addDateSeparators(messages) }, () => {
       this.scrollChatToBottom();
     });
+    // Persist to storage
+    this._persistMessages(messages);
   },
 
   appendLocalMessage(message) {
@@ -336,7 +344,25 @@ Page({
     this.setData({ messages, displayMessages: addDateSeparators(messages) }, () => {
       this.scrollChatToBottom();
     });
+    this._persistMessages(messages);
     return messages;
+  },
+
+  _persistMessages(messages) {
+    try {
+      var key = 'openclaw.msgs.' + this.data.activeChatId + '.' + (this.activeConn ? this.activeConn.id : '');
+      wx.setStorageSync(key, JSON.stringify(messages.slice(-200)));
+    } catch (e) {}
+  },
+
+  _loadPersistedMessages() {
+    try {
+      var key = 'openclaw.msgs.' + this.data.activeChatId + '.' + (this.activeConn ? this.activeConn.id : '');
+      var raw = wx.getStorageSync(key);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
   },
 
   handleSocketPacket(packet = {}) {
@@ -534,6 +560,98 @@ Page({
 
   handleSendMessage() {
     this.submitTextMessage(this.data.inputValue);
+  },
+
+  handleChooseImage() {
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const file = res.tempFiles[0];
+        const fs = wx.getFileSystemManager();
+        try {
+          const base64 = fs.readFileSync(file.tempFilePath, 'base64');
+          const mimeType = file.fileType === 'image' ? 'image/jpeg' : 'image/png';
+          const dataUrl = 'data:' + mimeType + ';base64,' + base64;
+
+          if (!this.genericClient || !this.genericClient.isOpen()) {
+            wx.showToast({ title: 'Not connected', icon: 'none' });
+            return;
+          }
+
+          const payload = this.genericClient.sendMedia({
+            messageType: 'image',
+            content: '',
+            mediaUrl: dataUrl,
+            mimeType: mimeType,
+          });
+
+          const msg = {
+            id: payload.messageId,
+            sender: 'user',
+            text: '[Image]',
+            mediaType: 'image',
+            timestamp: Date.now(),
+          };
+          this.appendLocalMessage(msg);
+        } catch (e) {
+          wx.showToast({ title: 'Failed to read image', icon: 'none' });
+        }
+      },
+    });
+  },
+
+  handleVoiceRecord() {
+    if (this._isRecording) {
+      this._recorderManager.stop();
+      return;
+    }
+
+    if (!this._recorderManager) {
+      this._recorderManager = wx.getRecorderManager();
+      this._recorderManager.onStop((res) => {
+        this._isRecording = false;
+        this.setData({ isRecording: false });
+        const fs = wx.getFileSystemManager();
+        try {
+          const base64 = fs.readFileSync(res.tempFilePath, 'base64');
+          const dataUrl = 'data:audio/aac;base64,' + base64;
+
+          if (!this.genericClient || !this.genericClient.isOpen()) {
+            wx.showToast({ title: 'Not connected', icon: 'none' });
+            return;
+          }
+
+          const payload = this.genericClient.sendMedia({
+            messageType: 'voice',
+            content: '',
+            mediaUrl: dataUrl,
+            mimeType: 'audio/aac',
+          });
+
+          const msg = {
+            id: payload.messageId,
+            sender: 'user',
+            text: '[Voice]',
+            mediaType: 'voice',
+            timestamp: Date.now(),
+          };
+          this.appendLocalMessage(msg);
+        } catch (e) {
+          wx.showToast({ title: 'Failed to read audio', icon: 'none' });
+        }
+      });
+      this._recorderManager.onError(() => {
+        this._isRecording = false;
+        this.setData({ isRecording: false });
+        wx.showToast({ title: 'Recording failed', icon: 'none' });
+      });
+    }
+
+    this._isRecording = true;
+    this.setData({ isRecording: true });
+    this._recorderManager.start({ format: 'aac', duration: 60000 });
   },
 
   handleToggleEmojiPicker() {

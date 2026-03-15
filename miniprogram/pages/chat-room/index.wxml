@@ -141,6 +141,9 @@
         <view class="header-icon-button header-icon-button--ghost" bindtap="handleToggleEmojiPicker" hover-class="button-pressed">
           <oc-icon name="smile" tone="{{showEmojiPicker && !reactingToMsgId ? 'green' : 'dark'}}" size="40rpx" />
         </view>
+        <view class="header-icon-button header-icon-button--ghost" bindtap="handleChooseImage" hover-class="button-pressed">
+          <text class="chat-media-icon">📷</text>
+        </view>
         <input
           class="chat-input"
           value="{{inputValue}}"
@@ -150,9 +153,16 @@
           confirm-type="send"
           bindconfirm="handleSendMessage"
         />
-        <view class="chat-send {{inputValue ? 'chat-send--active' : ''}}" bindtap="handleSendMessage" hover-class="button-pressed">
-          <oc-icon name="{{inputValue ? 'send' : 'mic'}}" tone="{{inputValue ? 'white' : 'dark'}}" size="34rpx" />
-        </view>
+        <block wx:if="{{inputValue}}">
+          <view class="chat-send chat-send--active" bindtap="handleSendMessage" hover-class="button-pressed">
+            <oc-icon name="send" tone="white" size="34rpx" />
+          </view>
+        </block>
+        <block wx:else>
+          <view class="chat-send {{isRecording ? 'chat-send--recording' : ''}}" bindtap="handleVoiceRecord" hover-class="button-pressed">
+            <text class="chat-media-icon">{{isRecording ? '⏹' : '🎙'}}</text>
+          </view>
+        </block>
       </view>
     </view>
   </view>

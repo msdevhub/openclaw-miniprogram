@@ -348,6 +348,53 @@ class GenericChannelClient {
 
     return payload;
   }
+
+  sendMedia(opts) {
+    if (!this.isOpen()) {
+      throw new Error('Socket is not connected.');
+    }
+
+    var payload = {
+      messageId: createStableId('msg'),
+      chatId: this.chatId,
+      chatType: this.chatType,
+      senderId: this.senderId,
+      senderName: this.senderName,
+      messageType: opts.messageType || 'image',
+      content: opts.content || '',
+      mediaUrl: opts.mediaUrl,
+      mimeType: opts.mimeType,
+      timestamp: Date.now(),
+    };
+    if (this.agentId) payload.agentId = this.agentId;
+
+    this.socketTask.send({
+      data: JSON.stringify({ type: 'message.receive', data: payload }),
+      fail: function () {},
+    });
+
+    return payload;
+  }
+
+  requestConversationList(agentId) {
+    this.sendRaw({
+      type: 'conversation.list.get',
+      data: {
+        requestId: createStableId('conv-list'),
+        agentId: agentId || this.agentId || undefined,
+      },
+    });
+  }
+
+  requestHistory(chatId) {
+    this.sendRaw({
+      type: 'history.get',
+      data: {
+        requestId: createStableId('history'),
+        chatId: chatId,
+      },
+    });
+  }
 }
 
 function createGenericChannelClient(options) {

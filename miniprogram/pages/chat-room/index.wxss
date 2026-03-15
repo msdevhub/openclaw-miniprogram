@@ -153,3 +153,13 @@
   padding: 8rpx;
   flex-shrink: 0;
 }
+
+/* Media icons */
+.chat-media-icon {
+  font-size: 36rpx;
+  line-height: 1;
+}
+
+.chat-send--recording {
+  background: #E15B64 !important;
+}

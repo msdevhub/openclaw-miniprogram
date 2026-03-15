@@ -12,8 +12,22 @@
         bindtap="handleBubbleTap"
         bindlongpress="handleLongPress"
       >
+        <!-- Quote reference -->
+        <view wx:if="{{message.replyTo && replyToText}}" class="md-quote-ref {{message.sender === 'user' ? 'md-quote-ref--user' : 'md-quote-ref--ai'}}">
+          <text class="md-quote-ref__text">{{replyToText}}</text>
+        </view>
+
         <!-- User: plain text -->
-        <text wx:if="{{message.sender === 'user'}}" class="message-text">{{message.text}}</text>
+        <text wx:if="{{message.sender === 'user' && !message.mediaType}}" class="message-text">{{message.text}}</text>
+
+        <!-- User: image -->
+        <image wx:elif="{{message.sender === 'user' && message.mediaType === 'image'}}" src="{{message.mediaUrl}}" class="message-image" mode="widthFix" />
+
+        <!-- User: voice -->
+        <text wx:elif="{{message.sender === 'user' && message.mediaType === 'voice'}}" class="message-text">🎙️ Voice message</text>
+
+        <!-- User: other text -->
+        <text wx:elif="{{message.sender === 'user'}}" class="message-text">{{message.text}}</text>
 
         <!-- AI: markdown rendered -->
         <view wx:else class="md-content">

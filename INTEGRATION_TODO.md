@@ -1,6 +1,6 @@
 # OpenClaw 聊天客户端 — 功能实现对比
 
-> 最后更新：2026-03-15
+> 最后更新：2026-03-16
 
 ## 项目结构
 
@@ -31,7 +31,7 @@
 | `channel.status.get` → `channel.status` | ↔ | ✅ | ✅ |
 | `agentId` in WebSocket URL | → | ✅ | ✅ |
 | `token` in WebSocket URL | → | ✅ | ✅ |
-| Image/Voice/Audio media (`mediaUrl`) | → | ✅ | ❌ |
+| Image/Voice/Audio media (`mediaUrl`) | → | ✅ | ✅ |
 
 ---
 
@@ -45,7 +45,7 @@
 | Token 认证连接 | ✅ | ✅ |
 | chatId/senderId 绑定 | ✅ | ✅ |
 | 历史消息加载 | ✅ | ✅ |
-| 消息持久化 (localStorage) | ✅ | ❌ (依赖 app-state 内存) |
+| 消息持久化 (localStorage) | ✅ | ✅ (wx.Storage) |
 | Thinking 指示器动画 | ✅ 三点跳动 | ✅ 三点跳动 + 文字 |
 | 断线自动重连 (指数退避 6次) | ✅ | ✅ |
 | 消息时间显示 (HH:MM) | ✅ | ✅ |
@@ -57,8 +57,8 @@
 |------|-----|--------|
 | 文本消息 | ✅ | ✅ |
 | Markdown 渲染 (AI 回复) | ✅ react-markdown | ✅ 自写解析器 (heading/bold/code/list/blockquote/link/hr) |
-| 图片消息发送 | ✅ 选图→base64→mediaUrl | ❌ |
-| 语音消息录制发送 | ✅ MediaRecorder→webm→mediaUrl | ❌ |
+| 图片消息发送 | ✅ 选图→base64→mediaUrl | ✅ wx.chooseMedia→base64 |
+| 语音消息录制发送 | ✅ MediaRecorder→webm→mediaUrl | ✅ RecorderManager→aac |
 
 ### 交互功能
 
@@ -70,7 +70,7 @@
 | Emoji 表情发送 | ✅ 直接发送 | ✅ 空输入快速发送，有输入拼接 |
 | Emoji reaction (协议) | ✅ reaction.add/remove | ✅ reaction.add/remove |
 | 引用回复 (parentId) | ✅ 回复按钮 + 回复栏 + 引用块 | ✅ 回复按钮 + 回复栏 |
-| AI 回复引用显示 (replyTo) | ✅ 气泡内引用块 | ❌ |
+| AI 回复引用显示 (replyTo) | ✅ 气泡内引用块 | ✅ 气泡内引用块 |
 | 交互卡片 (providers/models/think) | ✅ ActionCard 自动检测 | ✅ action-card + action-chip |
 
 ### 多 Agent
@@ -126,10 +126,7 @@
 
 | 优先级 | 事项 | 备注 |
 |--------|------|------|
-| 🟡 中 | 小程序图片/语音发送 | 选图→base64/录音→base64 |
-| 🟡 中 | 小程序 AI 回复引用显示 | message-bubble 渲染 replyTo 引用块 |
-| 🟡 中 | 小程序消息 localStorage 持久化 | 当前依赖内存 + history.sync |
-| 🟢 低 | 多端实时同步 | 需服务端支持 |
-| 🟢 低 | history.sync 按 agentId 隔离 | 需服务端插件更新 |
+| � 低 | 多端实时同步 | 需服务端支持 |
+| 🟢 低 | history.sync 按 agentId 隔离 | 服务端已支持，待验证 |
 
 > 本文档用于当前阶段实施，不作为最终架构文档。
