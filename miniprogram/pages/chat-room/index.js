@@ -160,6 +160,48 @@ function getConnectionMeta(status, detail) {
   }
 }
 
+const QUICK_COMMANDS = [
+  { label: '/status', emoji: '📊' },
+  { label: '/models', emoji: '🤖' },
+  { label: '/help', emoji: '❓' },
+  { label: '/new', emoji: '✨' },
+  { label: '/reset', emoji: '🔄' },
+];
+
+function formatTime(ts) {
+  if (!ts) return '';
+  var d = new Date(ts);
+  return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}
+
+function formatDate(ts) {
+  var d = new Date(ts);
+  var now = new Date();
+  if (d.toDateString() === now.toDateString()) return 'Today';
+  var y = new Date(now);
+  y.setDate(y.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return 'Yesterday';
+  return (d.getMonth() + 1) + '/' + d.getDate();
+}
+
+function isDifferentDay(ts1, ts2) {
+  if (!ts1 || !ts2) return true;
+  return new Date(ts1).toDateString() !== new Date(ts2).toDateString();
+}
+
+function addDateSeparators(messages) {
+  var result = [];
+  for (var i = 0; i < messages.length; i++) {
+    var msg = messages[i];
+    var prev = i > 0 ? messages[i - 1] : null;
+    if (isDifferentDay(prev ? prev.timestamp : null, msg.timestamp) && msg.timestamp) {
+      result.push({ id: 'sep-' + msg.id, type: 'date-separator', text: formatDate(msg.timestamp) });
+    }
+    result.push(Object.assign({}, msg, { formattedTime: formatTime(msg.timestamp) }));
+  }
+  return result;
+}
+
 Page({
   data: {
     ...DEFAULT_PAGE_CHROME,
@@ -167,6 +209,7 @@ Page({
     activeChat: {},
     activeConversationId: '',
     messages: [],
+    displayMessages: [],
     inputValue: '',
     showSlashMenu: false,
     showEmojiPicker: false,
@@ -175,9 +218,13 @@ Page({
     reactingToMsgId: '',
     activeBubbleId: '',
     chatScrollAnchor: '',
+    replyingTo: null,
     slashCommandCatalog: clone(SLASH_COMMANDS),
     slashCommands: clone(SLASH_COMMANDS),
     emojiList: clone(EMOJI_LIST),
+    quickCommands: QUICK_COMMANDS,
+    agentEmoji: '🤖',
+    agentName: '',
     genericSenderId: '',
     genericConnectionStatus: 'disconnected',
     genericConnectionStatusText: 'Offline',
@@ -195,16 +242,34 @@ Page({
       return;
     }
 
-    const conversationId = `openclaw-mini-agent-${agentId}-${activeConn.id}`;
+    const conversationId = activeConn.chatId || `openclaw-mini-agent-${agentId}-${activeConn.id}`;
     const connection = getConnectionState();
+
+    // Load agent info from cache
+    var agentEmoji = '🤖';
+    var agentName = agentId;
+    try {
+      var cached = wx.getStorageSync('openclaw.agentList');
+      if (cached) {
+        var agents = JSON.parse(cached);
+        var info = agents.find(function (a) { return a.id === agentId; });
+        if (info) {
+          agentEmoji = info.identityEmoji || '🤖';
+          agentName = info.name || agentId;
+        }
+      }
+    } catch (e) {}
 
     this.setData({
       ...getPageChromeData(),
       activeChatId: agentId,
-      activeChat: { id: agentId, name: agentId, isGroup: false },
+      activeChat: { id: agentId, name: agentName, isGroup: false },
       activeConversationId: conversationId,
       messages: getMessages(conversationId),
+      displayMessages: addDateSeparators(getMessages(conversationId)),
       genericSenderId: connection.senderId,
+      agentEmoji,
+      agentName,
     }, () => {
       this.scrollChatToBottom();
     });
@@ -261,14 +326,14 @@ Page({
 
   syncMessages(messages) {
     setMessages(this.data.activeConversationId, messages);
-    this.setData({ messages }, () => {
+    this.setData({ messages, displayMessages: addDateSeparators(messages) }, () => {
       this.scrollChatToBottom();
     });
   },
 
   appendLocalMessage(message) {
     const messages = appendMessage(this.data.activeConversationId, message);
-    this.setData({ messages }, () => {
+    this.setData({ messages, displayMessages: addDateSeparators(messages) }, () => {
       this.scrollChatToBottom();
     });
     return messages;
@@ -316,6 +381,25 @@ Page({
       case 'thinking.end':
         this.hideThinkingIndicator();
         break;
+      case 'reaction.add':
+      case 'reaction.remove': {
+        const rid = packet.data && packet.data.messageId;
+        const remoji = packet.data && packet.data.emoji;
+        if (rid && remoji) {
+          const msgs = this.data.messages.map(function (m) {
+            if (m.id !== rid) return m;
+            var reactions = Array.isArray(m.reactions) ? m.reactions.slice() : [];
+            if (packet.type === 'reaction.add') {
+              if (!reactions.includes(remoji)) reactions.push(remoji);
+            } else {
+              reactions = reactions.filter(function (r) { return r !== remoji; });
+            }
+            return Object.assign({}, m, { reactions: reactions });
+          });
+          this.syncMessages(msgs);
+        }
+        break;
+      }
       default:
         break;
     }
@@ -352,9 +436,10 @@ Page({
       serverUrl: activeConn.serverUrl,
       chatId: this.data.activeConversationId,
       chatType: 'direct',
-      senderId: connection.senderId,
+      senderId: activeConn.senderId || connection.senderId,
       senderName: activeConn.displayName || connection.senderName,
       agentId: this.data.activeChatId,
+      token: activeConn.token || '',
       onEvent: (packet) => this.handleSocketPacket(packet),
       onStatusChange: (payload) => this.handleSocketStatus(payload),
       onError: (message) => this.handleSocketError(message),
@@ -413,9 +498,14 @@ Page({
       return false;
     }
 
+    const replyTo = this.data.replyingTo;
     let payload;
     try {
-      payload = this.genericClient.sendText(text);
+      if (replyTo && replyTo.id) {
+        payload = this.genericClient.sendTextWithParent(text, replyTo.id);
+      } else {
+        payload = this.genericClient.sendText(text);
+      }
     } catch (error) {
       wx.showToast({ title: 'Generic Channel is not connected.', icon: 'none' });
       this.connectAgentChannel(true);
@@ -423,6 +513,8 @@ Page({
     }
 
     const nextMessage = normalizeInboundMessage(payload);
+    if (replyTo) nextMessage.replyTo = replyTo.id;
+    nextMessage.timestamp = Date.now();
 
     this.setData({
       inputValue: '',
@@ -431,6 +523,7 @@ Page({
       slashCommands: clone(this.data.slashCommandCatalog),
       reactingToMsgId: '',
       activeBubbleId: '',
+      replyingTo: null,
     });
 
     this.hideThinkingIndicator();
@@ -503,17 +596,32 @@ Page({
     const { emoji } = event.detail;
 
     if (this.data.reactingToMsgId) {
+      const msg = this.data.messages.find((m) => m.id === this.data.reactingToMsgId);
+      const hasReaction = msg && Array.isArray(msg.reactions) && msg.reactions.includes(emoji);
+
+      // Optimistic local update
       const messages = this.data.messages.map((message) => {
         if (message.id !== this.data.reactingToMsgId) return message;
         const reactions = Array.isArray(message.reactions) ? [...message.reactions] : [];
-        const exists = reactions.includes(emoji);
         return {
           ...message,
-          reactions: exists ? reactions.filter((item) => item !== emoji) : [...reactions, emoji],
+          reactions: hasReaction ? reactions.filter((item) => item !== emoji) : [...reactions, emoji],
         };
       });
 
       this.syncMessages(messages);
+
+      // Send to server
+      try {
+        if (this.genericClient && this.genericClient.isOpen()) {
+          if (hasReaction) {
+            this.genericClient.removeReaction(this.data.reactingToMsgId, emoji);
+          } else {
+            this.genericClient.addReaction(this.data.reactingToMsgId, emoji);
+          }
+        }
+      } catch (e) {}
+
       this.setData({
         showEmojiPicker: false,
         reactingToMsgId: '',
@@ -533,6 +641,23 @@ Page({
         this.submitTextMessage(nextInputValue);
       }
     });
+  },
+
+  handleQuickCommand(event) {
+    const cmd = event.currentTarget.dataset.command;
+    if (cmd) this.submitTextMessage(cmd);
+  },
+
+  handleStartReply(event) {
+    const msgId = event.currentTarget.dataset.msgId;
+    const msg = this.data.messages.find((m) => m.id === msgId);
+    if (msg) {
+      this.setData({ replyingTo: msg });
+    }
+  },
+
+  handleCancelReply() {
+    this.setData({ replyingTo: null });
   },
 
   scrollChatToBottom() {

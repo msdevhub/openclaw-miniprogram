@@ -13,6 +13,7 @@ const {
   removeServerConnection,
   getActiveConnectionId,
   setActiveConnectionId,
+  updateServerConnection,
 } = require('../../utils/generic-channel');
 
 Page({
@@ -24,6 +25,8 @@ Page({
     profileGroups: getProfileGroups(),
     servers: [],
     activeServerId: '',
+    editingServer: null,
+    editForm: { name: '', displayName: '', serverUrl: '', token: '', chatId: '', senderId: '' },
   },
 
   onLoad() {
@@ -91,6 +94,51 @@ Page({
         }
       },
     });
+  },
+
+  handleEditServer(event) {
+    const id = event.currentTarget.dataset.id;
+    const server = getServerConnections().find(function (c) { return c.id === id; });
+    if (!server) return;
+    this.setData({
+      editingServer: server,
+      editForm: {
+        name: server.name || '',
+        displayName: server.displayName || '',
+        serverUrl: server.serverUrl || '',
+        token: server.token || '',
+        chatId: server.chatId || '',
+        senderId: server.senderId || '',
+      },
+    });
+  },
+
+  handleEditInput(event) {
+    const field = event.currentTarget.dataset.field;
+    const value = event.detail.value || '';
+    this.setData({ ['editForm.' + field]: value });
+  },
+
+  handleSaveEdit() {
+    const server = this.data.editingServer;
+    if (!server) return;
+    updateServerConnection(server.id, {
+      name: this.data.editForm.name.trim() || server.name,
+      displayName: this.data.editForm.displayName.trim() || server.displayName,
+      serverUrl: this.data.editForm.serverUrl.trim() || server.serverUrl,
+      token: this.data.editForm.token.trim() || '',
+      chatId: this.data.editForm.chatId.trim() || '',
+      senderId: this.data.editForm.senderId.trim() || '',
+    });
+    this.setData({
+      editingServer: null,
+      servers: getServerConnections(),
+    });
+    wx.showToast({ title: 'Server updated', icon: 'none' });
+  },
+
+  handleCancelEdit() {
+    this.setData({ editingServer: null });
   },
 
   handleLogout() {

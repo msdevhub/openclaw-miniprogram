@@ -103,6 +103,7 @@ class GenericChannelClient {
     this.senderId = options.senderId;
     this.senderName = options.senderName;
     this.agentId = options.agentId || '';
+    this.authToken = options.token || '';
     this.onEvent = options.onEvent;
     this.onStatusChange = options.onStatusChange;
     this.onError = options.onError;
@@ -151,7 +152,7 @@ class GenericChannelClient {
     this.updateStatus(nextStatus);
 
     const socketTask = wx.connectSocket({
-      url: buildSocketUrl(this.serverUrl, this.chatId, this.agentId),
+      url: buildSocketUrl(this.serverUrl, this.chatId, this.agentId, this.authToken),
       timeout: 10000,
     });
 
@@ -298,6 +299,55 @@ class GenericChannelClient {
       },
     });
   }
+
+  addReaction(messageId, emoji) {
+    this.sendRaw({
+      type: 'reaction.add',
+      data: {
+        messageId,
+        chatId: this.chatId,
+        senderId: this.senderId,
+        emoji,
+        timestamp: Date.now(),
+      },
+    });
+  }
+
+  removeReaction(messageId, emoji) {
+    this.sendRaw({
+      type: 'reaction.remove',
+      data: {
+        messageId,
+        chatId: this.chatId,
+        senderId: this.senderId,
+        emoji,
+        timestamp: Date.now(),
+      },
+    });
+  }
+
+  sendTextWithParent(content, parentId) {
+    if (!this.isOpen()) {
+      throw new Error('Socket is not connected.');
+    }
+
+    var payload = buildInboundMessage({
+      chatId: this.chatId,
+      senderId: this.senderId,
+      senderName: this.senderName,
+      chatType: this.chatType,
+      content: content,
+      parentId: parentId,
+      agentId: this.agentId,
+    });
+
+    this.socketTask.send({
+      data: JSON.stringify({ type: 'message.receive', data: payload }),
+      fail: function () {},
+    });
+
+    return payload;
+  }
 }
 
 function createGenericChannelClient(options) {
@@ -324,13 +374,16 @@ function saveServerConnections(list) {
   } catch (e) {}
 }
 
-function addServerConnection(name, serverUrl, displayName) {
+function addServerConnection(name, serverUrl, displayName, token, chatId, senderId) {
   const list = getServerConnections();
   const conn = {
     id: createStableId('conn'),
     name,
     displayName,
     serverUrl: (serverUrl || '').replace(/\/+$/, ''),
+    token: token || '',
+    chatId: chatId || '',
+    senderId: senderId || '',
   };
   list.push(conn);
   saveServerConnections(list);
@@ -370,6 +423,14 @@ function getServerConnectionById(id) {
   return getServerConnections().find(function (c) { return c.id === id; }) || null;
 }
 
+function updateServerConnection(id, updates) {
+  var list = getServerConnections();
+  var idx = list.findIndex(function (c) { return c.id === id; });
+  if (idx === -1) return;
+  Object.keys(updates).forEach(function (k) { list[idx][k] = updates[k]; });
+  saveServerConnections(list);
+}
+
 module.exports = {
   DEFAULT_WS_URL,
   buildConversationId,
@@ -383,4 +444,5 @@ module.exports = {
   setActiveConnectionId,
   getActiveConnection,
   getServerConnectionById,
+  updateServerConnection,
 };

@@ -44,8 +44,39 @@
           </view>
 
           <view class="form-field">
-            <text class="form-label">Sender ID</text>
-            <view class="pairing-readonly">{{genericSenderId}}</view>
+            <text class="form-label">Auth Token <text class="form-label--hint">(optional)</text></text>
+            <input
+              class="form-input"
+              value="{{preferenceForm.token}}"
+              data-field="token"
+              bindinput="handleInput"
+              placeholder="gc_user_xxxxxxxxx"
+              placeholder-style="color: rgba(45, 52, 54, 0.35);"
+            />
+          </view>
+
+          <view class="form-field">
+            <text class="form-label">Chat ID <text class="form-label--hint">(token auth: must match binding)</text></text>
+            <input
+              class="form-input"
+              value="{{preferenceForm.chatId}}"
+              data-field="chatId"
+              bindinput="handleInput"
+              placeholder="gc-test-main"
+              placeholder-style="color: rgba(45, 52, 54, 0.35);"
+            />
+          </view>
+
+          <view class="form-field">
+            <text class="form-label">Sender ID <text class="form-label--hint">(token auth: must match binding)</text></text>
+            <input
+              class="form-input"
+              value="{{preferenceForm.senderId}}"
+              data-field="senderId"
+              bindinput="handleInput"
+              placeholder="gc-test-main"
+              placeholder-style="color: rgba(45, 52, 54, 0.35);"
+            />
           </view>
         </view>
 

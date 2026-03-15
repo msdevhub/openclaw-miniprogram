@@ -44,6 +44,9 @@ Page({
   handlePairConnection() {
     const displayName = (this.data.preferenceForm.displayName || '').trim();
     const serverUrl = (this.data.preferenceForm.genericChannelUrl || '').trim();
+    const token = (this.data.preferenceForm.token || '').trim();
+    const chatId = (this.data.preferenceForm.chatId || '').trim();
+    const senderId = (this.data.preferenceForm.senderId || '').trim();
 
     if (!displayName) {
       wx.showToast({ title: 'Display name is required.', icon: 'none' });
@@ -55,15 +58,13 @@ Page({
       return;
     }
 
-    // Save to legacy connection state for backward compat
     saveConnectionState({
       displayName,
       serverUrl,
       isPaired: true,
     });
 
-    // Also save to multi-server store
-    const conn = addServerConnection(displayName, serverUrl, displayName);
+    const conn = addServerConnection(displayName, serverUrl, displayName, token, chatId, senderId);
     setActiveConnectionId(conn.id);
 
     updatePreferenceForm({

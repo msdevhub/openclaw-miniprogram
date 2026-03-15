@@ -3,7 +3,7 @@
   class="message-row {{message.sender === 'user' ? 'message-row--user' : 'message-row--ai'}}"
   style="animation-delay: {{delay}}ms;"
 >
-  <view wx:if="{{message.sender !== 'user'}}" class="message-avatar">OC</view>
+  <view wx:if=\"{{message.sender !== 'user'}}\" class=\"message-avatar\">{{agentEmoji}}</view>
 
   <view class="message-stack {{message.sender === 'user' ? 'message-stack--user' : 'message-stack--ai'}}">
     <view class="message-main {{message.sender === 'user' ? 'message-main--user' : 'message-main--ai'}}">
@@ -97,5 +97,7 @@
         <text class="message-reaction__emoji">{{item}}</text>
       </view>
     </view>
+
+    <text wx:if="{{message.formattedTime}}" class="message-time {{message.sender === 'user' ? 'message-time--user' : 'message-time--ai'}}">{{message.formattedTime}}</text>
   </view>
 </view>

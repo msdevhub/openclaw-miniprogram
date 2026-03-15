@@ -248,3 +248,18 @@
   background: var(--color-border);
   margin: 16rpx 0;
 }
+
+.message-time {
+  font-size: 20rpx;
+  color: var(--color-text-muted);
+  margin-top: 4rpx;
+  opacity: 0.5;
+}
+
+.message-time--user {
+  text-align: right;
+}
+
+.message-time--ai {
+  text-align: left;
+}

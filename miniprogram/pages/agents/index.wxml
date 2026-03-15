@@ -3,8 +3,13 @@
     <view class="screen-header screen-header--sticky" style="padding-top: {{navBarPaddingTop}}px; min-height: {{navBarHeight}}px;">
       <view class="screen-header__row screen-header__row--capsule-safe" style="padding-right: {{capsuleSafeInsetRight}}px;">
         <text class="screen-title">Agents</text>
-        <view wx:if="{{activeServerName}}" class="agent-server-badge">
-          <text class="agent-server-badge__text">{{activeServerName}}</text>
+        <view class="agent-header-actions">
+          <view class="icon-button icon-button--small" bindtap="handleRefreshAgents" hover-class="button-pressed">
+            <text class="agent-refresh-icon">🔄</text>
+          </view>
+          <view wx:if="{{activeServerName}}" class="agent-server-badge">
+            <text class="agent-server-badge__text">{{activeServerName}}</text>
+          </view>
         </view>
       </view>
 

@@ -34,11 +34,25 @@ Page({
       navItems: getNavItems(getTotalUnread()),
     });
     this.lobbyClient = null;
+    this._hasFetched = false;
+
+    // Load cached agents immediately
+    try {
+      var cached = wx.getStorageSync('openclaw.agentList');
+      if (cached) {
+        var agents = JSON.parse(cached);
+        this.setData({ agents, displayedAgents: filterAgents(agents, ''), loading: false });
+      }
+    } catch (e) {}
   },
 
   onShow() {
     this.setData({ navItems: getNavItems(getTotalUnread()) });
-    this.connectAndFetchAgents();
+    // Only fetch from server on first show or manual refresh
+    if (!this._hasFetched) {
+      this.connectAndFetchAgents();
+      this._hasFetched = true;
+    }
   },
 
   onHide() {
@@ -62,9 +76,10 @@ Page({
 
     this.lobbyClient = createGenericChannelClient({
       serverUrl: activeConn.serverUrl,
-      chatId: 'openclaw-mini-lobby-' + activeConn.id,
-      senderId: connection.senderId,
+      chatId: activeConn.chatId || ('openclaw-mini-lobby-' + activeConn.id),
+      senderId: activeConn.senderId || connection.senderId,
       senderName: activeConn.displayName || connection.senderName,
+      token: activeConn.token || '',
       onEvent: (packet) => this.handleLobbyPacket(packet),
       onStatusChange: (payload) => {
         this.setData({ wsStatus: payload.status });
@@ -97,6 +112,8 @@ Page({
         displayedAgents: filterAgents(agents, this.data.searchQuery),
         loading: false,
       });
+      // Cache for ChatRoom to read
+      try { wx.setStorageSync('openclaw.agentList', JSON.stringify(agents)); } catch (e) {}
     }
   },
 
@@ -134,5 +151,10 @@ Page({
 
   handlePlusAction() {
     navigateToScreen('pairing');
+  },
+
+  handleRefreshAgents() {
+    this._hasFetched = false;
+    this.connectAndFetchAgents();
   },
 });

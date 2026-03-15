@@ -41,6 +41,9 @@
                 <text class="profile-server-name">{{item.name}}</text>
                 <text class="profile-server-url">{{item.serverUrl}}</text>
               </view>
+              <view class="profile-server-delete" data-id="{{item.id}}" catchtap="handleEditServer">
+                <text class="profile-server-delete__text">✎</text>
+              </view>
               <view class="profile-server-delete" data-id="{{item.id}}" catchtap="handleRemoveServer">
                 <text class="profile-server-delete__text">✕</text>
               </view>
@@ -103,4 +106,43 @@
     safeAreaBottom="{{safeAreaBottom}}"
     bindnavigate="handleNavigate"
   />
+
+  <!-- Edit Server Modal -->
+  <view wx:if="{{editingServer}}" class="edit-modal-mask" bindtap="handleCancelEdit">
+    <view class="edit-modal" catchtap="">
+      <view class="edit-modal__header">
+        <text class="edit-modal__title">Edit Server</text>
+        <view class="edit-modal__close" bindtap="handleCancelEdit">✕</view>
+      </view>
+      <view class="edit-modal__body">
+        <view class="form-field">
+          <text class="form-label">Connection Name</text>
+          <input class="form-input" value="{{editForm.name}}" data-field="name" bindinput="handleEditInput" />
+        </view>
+        <view class="form-field">
+          <text class="form-label">Display Name</text>
+          <input class="form-input" value="{{editForm.displayName}}" data-field="displayName" bindinput="handleEditInput" />
+        </view>
+        <view class="form-field">
+          <text class="form-label">WS URL</text>
+          <input class="form-input" value="{{editForm.serverUrl}}" data-field="serverUrl" bindinput="handleEditInput" />
+        </view>
+        <view class="form-field">
+          <text class="form-label">Auth Token</text>
+          <input class="form-input" value="{{editForm.token}}" data-field="token" bindinput="handleEditInput" placeholder="gc_user_xxxxxxxxx" placeholder-style="color: rgba(45, 52, 54, 0.35);" />
+        </view>
+        <view class="form-field">
+          <text class="form-label">Chat ID</text>
+          <input class="form-input" value="{{editForm.chatId}}" data-field="chatId" bindinput="handleEditInput" placeholder="gc-test-main" placeholder-style="color: rgba(45, 52, 54, 0.35);" />
+        </view>
+        <view class="form-field">
+          <text class="form-label">Sender ID</text>
+          <input class="form-input" value="{{editForm.senderId}}" data-field="senderId" bindinput="handleEditInput" placeholder="gc-test-main" placeholder-style="color: rgba(45, 52, 54, 0.35);" />
+        </view>
+      </view>
+      <view class="primary-button primary-button--save" bindtap="handleSaveEdit" hover-class="button-pressed">
+        <text class="primary-button__label">Save Changes</text>
+      </view>
+    </view>
+  </view>
 </view>

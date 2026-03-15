@@ -122,3 +122,59 @@
   padding: 16rpx 32rpx;
   font-size: 26rpx;
 }
+
+/* Edit Modal */
+.edit-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.edit-modal {
+  width: 100%;
+  max-width: 750rpx;
+  background: var(--color-card);
+  border-radius: var(--radius-32) var(--radius-32) 0 0;
+  padding: 32rpx;
+  margin-bottom: 120rpx;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.edit-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.edit-modal__title {
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.edit-modal__close {
+  font-size: 32rpx;
+  color: var(--color-text-muted);
+  padding: 12rpx;
+}
+
+.edit-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.form-label--hint {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  font-size: 22rpx;
+}

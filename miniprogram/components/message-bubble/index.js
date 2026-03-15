@@ -6,6 +6,10 @@ Component({
       type: Object,
       value: {},
     },
+    agentEmoji: {
+      type: String,
+      value: '🤖',
+    },
     isActive: {
       type: Boolean,
       value: false,

@@ -8,7 +8,7 @@
       </view>
 
       <view class="chat-room-head">
-        <text class="chat-room-head__title">{{activeChat.name}}</text>
+        <text class="chat-room-head__title">{{agentEmoji}} {{agentName}}</text>
         <view class="chat-room-head__status" bindtap="handleReconnectChat">
           <view class="chat-room-head__status-dot chat-room-head__status-dot--{{genericConnectionTone}}"></view>
           <text class="chat-room-head__status-text chat-room-head__status-text--{{genericConnectionTone}}">{{genericConnectionStatusText}}</text>
@@ -25,15 +25,26 @@
           <text class="chat-room-empty__desc">{{genericConnectionDetail}}</text>
         </view>
 
-        <message-bubble
-          wx:for="{{messages}}"
-          wx:key="id"
-          message="{{item}}"
-          isActive="{{activeBubbleId === item.id}}"
-          delay="{{index * 50}}"
-          bindselect="handleBubbleSelect"
-          bindreaction="handleOpenReactionPicker"
-        />
+        <block wx:for="{{displayMessages}}" wx:key="id">
+          <!-- Date separator -->
+          <view wx:if="{{item.type === 'date-separator'}}" class="date-separator">
+            <view class="date-separator__line"></view>
+            <text class="date-separator__text">{{item.text}}</text>
+            <view class="date-separator__line"></view>
+          </view>
+
+          <!-- Message bubble -->
+          <block wx:else>
+            <message-bubble
+              message="{{item}}"
+              agentEmoji="{{agentEmoji}}"
+              isActive="{{activeBubbleId === item.id}}"
+              delay="{{index * 30}}"
+              bindselect="handleBubbleSelect"
+              bindreaction="handleOpenReactionPicker"
+            />
+          </block>
+        </block>
 
         <!-- Action cards for AI messages with detectable actions -->
         <block wx:for="{{messages}}" wx:key="id">
@@ -101,6 +112,31 @@
     />
 
     <view class="chat-room-input" style="padding-bottom: {{inputSafeAreaBottom}}px;">
+      <!-- Quick commands -->
+      <scroll-view wx:if="{{!showSlashMenu && !showEmojiPicker && !inputValue}}" class="quick-commands" scroll-x>
+        <view
+          wx:for="{{quickCommands}}"
+          wx:key="label"
+          class="quick-cmd"
+          data-command="{{item.label}}"
+          bindtap="handleQuickCommand"
+          hover-class="quick-cmd--pressed"
+        >
+          <text class="quick-cmd__emoji">{{item.emoji}}</text>
+          <text class="quick-cmd__label">{{item.label}}</text>
+        </view>
+      </scroll-view>
+
+      <!-- Reply bar -->
+      <view wx:if="{{replyingTo}}" class="reply-bar">
+        <view class="reply-bar__indicator"></view>
+        <view class="reply-bar__content">
+          <text class="reply-bar__label">Replying to {{replyingTo.sender === 'user' ? 'yourself' : 'Bot'}}</text>
+          <text class="reply-bar__text">{{replyingTo.text}}</text>
+        </view>
+        <view class="reply-bar__close" bindtap="handleCancelReply">✕</view>
+      </view>
+
       <view class="chat-input-shell">
         <view class="header-icon-button header-icon-button--ghost" bindtap="handleToggleEmojiPicker" hover-class="button-pressed">
           <oc-icon name="smile" tone="{{showEmojiPicker && !reactingToMsgId ? 'green' : 'dark'}}" size="40rpx" />
