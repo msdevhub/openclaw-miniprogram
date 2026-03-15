@@ -1,7 +1,35 @@
 import { useState, useRef, useEffect, useCallback, type ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, MoreHorizontal, Smile, Mic, MicOff, Send, Code, FileText, Zap, SmilePlus, Wifi, WifiOff, Loader2, HelpCircle, Database, Activity, User, Plus, RotateCcw, Cpu, Server, MessageSquare, LayoutDashboard, Square, Image, CornerDownLeft, X } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal, Smile, Mic, MicOff, Send, Code, FileText, Zap, SmilePlus, Wifi, WifiOff, Loader2, HelpCircle, Database, Activity, User, Plus, RotateCcw, Cpu, Server, MessageSquare, LayoutDashboard, Square, Image, CornerDownLeft, X, Pencil, Trash2, Paperclip } from 'lucide-react';
 import Markdown from 'react-markdown';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import bash from 'highlight.js/lib/languages/bash';
+import json from 'highlight.js/lib/languages/json';
+import css from 'highlight.js/lib/languages/css';
+import xml from 'highlight.js/lib/languages/xml';
+import yaml from 'highlight.js/lib/languages/yaml';
+import sql from 'highlight.js/lib/languages/sql';
+import markdown from 'highlight.js/lib/languages/markdown';
+
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('js', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('ts', typescript);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('sh', bash);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('html', xml);
+hljs.registerLanguage('xml', xml);
+hljs.registerLanguage('yaml', yaml);
+hljs.registerLanguage('yml', yaml);
+hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('markdown', markdown);
+hljs.registerLanguage('md', markdown);
 import * as channel from '../services/clawChannel';
 import { getUserId } from '../App';
 import { getActiveConnection } from '../services/connectionStore';
@@ -117,6 +145,9 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
   const [isThinking, setIsThinking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [peerTyping, setPeerTyping] = useState(false);
+  const [editingMsg, setEditingMsg] = useState<Message | null>(null);
+  const fileInputRef2 = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -180,6 +211,18 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
         setIsThinking(true);
       } else if (packet.type === 'thinking.end') {
         // keep thinking visible until message.send arrives
+      } else if (packet.type === 'typing') {
+        const d = packet.data as { senderId?: string; isTyping?: boolean };
+        if (d.senderId !== getUserId()) {
+          setPeerTyping(!!d.isTyping);
+          if (d.isTyping) setTimeout(() => setPeerTyping(false), 5000);
+        }
+      } else if (packet.type === 'message.edit') {
+        const d = packet.data as { messageId: string; content: string };
+        setMessages((prev) => prev.map((m) => m.id === d.messageId ? { ...m, text: d.content } : m));
+      } else if (packet.type === 'message.delete') {
+        const d = packet.data as { messageId: string };
+        setMessages((prev) => prev.filter((m) => m.id !== d.messageId));
       } else if (packet.type === 'history.sync' && Array.isArray(packet.data?.messages)) {
         const history = (packet.data.messages as Array<{messageId?: string; content?: string; direction?: string; senderId?: string; timestamp?: number}>).map((m) => ({
           id: m.messageId || Date.now().toString(),
@@ -203,13 +246,62 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
     };
   }, [agentId, activeConn?.id]);
 
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInputValue(val);
     setShowSlashMenu(val.startsWith('/') && !val.includes(' '));
+
+    // Send typing indicator (debounced)
+    if (val.trim()) {
+      try { channel.sendTyping(true); } catch {}
+      if (typingTimer.current) clearTimeout(typingTimer.current);
+      typingTimer.current = setTimeout(() => { try { channel.sendTyping(false); } catch {} }, 3000);
+    }
+  };
+
+  // Edit message
+  const handleEditMessage = (msg: Message) => {
+    setEditingMsg(msg);
+    setInputValue(msg.text);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingMsg || !inputValue.trim()) return;
+    channel.editMessage(editingMsg.id, inputValue.trim());
+    setMessages((prev) => prev.map((m) => m.id === editingMsg.id ? { ...m, text: inputValue.trim() } : m));
+    setEditingMsg(null);
+    setInputValue('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMsg(null);
+    setInputValue('');
+  };
+
+  // Delete message
+  const handleDeleteMessage = (msgId: string) => {
+    channel.deleteMessage(msgId);
+    setMessages((prev) => prev.filter((m) => m.id !== msgId));
+  };
+
+  // File picker
+  const handleFilePick = () => fileInputRef2.current?.click();
+  const handleFileSelected2 = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    const dataUrl = await fileToDataUrl(file);
+    const userMsg: Message = { id: Date.now().toString(), sender: 'user', text: `📎 ${file.name}`, timestamp: Date.now() };
+    setMessages((prev) => [...prev, userMsg]);
+    try {
+      channel.sendFile({ content: file.name, mediaUrl: dataUrl, mimeType: file.type, fileName: file.name, agentId: agentId || undefined });
+    } catch { /* ignore */ }
   };
 
   const handleSend = () => {
+    if (editingMsg) { handleSaveEdit(); return; }
     if (!inputValue.trim()) return;
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -483,14 +575,24 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                         components={{
                           p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
                           code: ({ children, className }) => {
-                            const isBlock = className?.includes('language-');
-                            return isBlock ? (
-                              <pre className="bg-[#F8FAFB] border border-[#EDF2F0] rounded-lg p-3 my-2 overflow-x-auto text-[13px]">
-                                <code>{children}</code>
-                              </pre>
-                            ) : (
-                              <code className="bg-[#EDF2F0] text-[#2D3436] px-1.5 py-0.5 rounded text-[13px]">{children}</code>
-                            );
+                            const lang = className?.replace('language-', '') || '';
+                            const isBlock = !!className?.includes('language-');
+                            if (isBlock) {
+                              const code = String(children).replace(/\n$/, '');
+                              let highlighted = code;
+                              try {
+                                highlighted = lang && hljs.getLanguage(lang)
+                                  ? hljs.highlight(code, { language: lang }).value
+                                  : hljs.highlightAuto(code).value;
+                              } catch { /* fallback to plain */ }
+                              return (
+                                <pre className="bg-[#1e1e2e] border border-[#313244] rounded-lg p-3 my-2 overflow-x-auto text-[13px]">
+                                  {lang && <span className="text-[10px] text-[#6c7086] float-right uppercase">{lang}</span>}
+                                  <code className="text-[#cdd6f4]" dangerouslySetInnerHTML={{ __html: highlighted }} />
+                                </pre>
+                              );
+                            }
+                            return <code className="bg-[#EDF2F0] text-[#2D3436] px-1.5 py-0.5 rounded text-[13px]">{children}</code>;
                           },
                           pre: ({ children }) => <>{children}</>,
                           ul: ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-1">{children}</ul>,
@@ -506,7 +608,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                     )}
                   </div>
                   
-                  {/* Reaction & Reply Buttons (appear on hover/tap) */}
+                  {/* Reaction & Reply & Edit/Delete Buttons */}
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
                     <motion.button
                       whileTap={{ scale: 0.9 }}
@@ -522,6 +624,24 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                     >
                       <CornerDownLeft size={14} />
                     </motion.button>
+                    {isUser && (
+                      <>
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleEditMessage(msg)}
+                          className="p-1.5 text-[#2D3436]/40 hover:text-amber-500 bg-white rounded-full shadow-sm border border-[#EDF2F0]"
+                        >
+                          <Pencil size={14} />
+                        </motion.button>
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleDeleteMessage(msg.id)}
+                          className="p-1.5 text-[#2D3436]/40 hover:text-red-500 bg-white rounded-full shadow-sm border border-[#EDF2F0]"
+                        >
+                          <Trash2 size={14} />
+                        </motion.button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -557,6 +677,14 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
             </div>
           );
         })}
+        {/* Typing indicator */}
+        {peerTyping && !isThinking && (
+          <div className="flex items-center gap-2 px-2 text-[12px] text-[#2D3436]/40">
+            <span className="w-1.5 h-1.5 bg-[#67B88B] rounded-full animate-pulse" />
+            {agentInfo?.name || 'Bot'} is typing…
+          </div>
+        )}
+
         {/* Thinking indicator */}
         <AnimatePresence>
           {isThinking && (
@@ -665,6 +793,20 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
           </div>
         )}
 
+        {/* Edit bar */}
+        {editingMsg && (
+          <div className="flex items-center gap-2 px-4 py-2 mb-2 bg-amber-50 border border-amber-200 rounded-[16px]">
+            <Pencil size={14} className="text-amber-500 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] text-amber-600 font-medium">Editing message</p>
+              <p className="text-[13px] text-amber-800/60 truncate">{editingMsg.text}</p>
+            </div>
+            <motion.button whileTap={{ scale: 0.8 }} onClick={handleCancelEdit} className="p-1 text-amber-400">
+              <X size={16} />
+            </motion.button>
+          </div>
+        )}
+
         {/* Reply bar */}
         <AnimatePresence>
           {replyingTo && (
@@ -705,7 +847,15 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
           >
             <Image size={22} />
           </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={handleFilePick}
+            className="p-2 text-[#2D3436]/40 hover:text-[#2D3436] transition-colors"
+          >
+            <Paperclip size={20} />
+          </motion.button>
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelected} />
+          <input ref={fileInputRef2} type="file" className="hidden" onChange={handleFileSelected2} />
           <input
             type="text"
             value={inputValue}

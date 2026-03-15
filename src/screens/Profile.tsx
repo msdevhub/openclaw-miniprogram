@@ -127,7 +127,10 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
 
         {/* Settings */}
         <Card className="overflow-hidden">
-          <SettingItem icon={Moon} label="Dark Mode" hasToggle active={false} />
+          <SettingItem icon={Moon} label="Dark Mode" hasToggle active={document.documentElement.classList.contains('dark')} onClick={() => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('openclaw.darkMode', document.documentElement.classList.contains('dark') ? '1' : '0');
+          }} />
           <div className="h-[1px] bg-[#EDF2F0] ml-14" />
           <SettingItem icon={Bell} label="Push Notifications" hasToggle active={true} />
           <div className="h-[1px] bg-[#EDF2F0] ml-14" />

@@ -343,6 +343,74 @@ export function sendTextWithParent(content: string, parentId: string, agentId?: 
   return payload;
 }
 
+// --- Message edit / delete ---
+
+export function editMessage(messageId: string, newContent: string) {
+  sendRaw({
+    type: 'message.edit',
+    data: {
+      messageId,
+      chatId: currentChatId,
+      senderId: currentSenderId,
+      content: newContent,
+      timestamp: Date.now(),
+    },
+  });
+}
+
+export function deleteMessage(messageId: string) {
+  sendRaw({
+    type: 'message.delete',
+    data: {
+      messageId,
+      chatId: currentChatId,
+      senderId: currentSenderId,
+      timestamp: Date.now(),
+    },
+  });
+}
+
+// --- Typing indicator ---
+
+export function sendTyping(isTyping = true) {
+  sendRaw({
+    type: 'typing',
+    data: {
+      chatId: currentChatId,
+      senderId: currentSenderId,
+      isTyping,
+      timestamp: Date.now(),
+    },
+  });
+}
+
+// --- File message ---
+
+export function sendFile(opts: { content: string; mediaUrl: string; mimeType: string; fileName?: string; agentId?: string }): OutboundPayload {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    throw new Error('Socket is not connected.');
+  }
+
+  const payload: OutboundPayload = {
+    messageId: createStableId('msg'),
+    chatId: currentChatId,
+    chatType: 'direct',
+    senderId: currentSenderId,
+    senderName: currentSenderName,
+    messageType: 'file',
+    content: opts.content || opts.fileName || 'File',
+    mediaUrl: opts.mediaUrl,
+    mimeType: opts.mimeType,
+    timestamp: Date.now(),
+  };
+  if (opts.agentId || currentAgentId) {
+    payload.agentId = opts.agentId || currentAgentId;
+  }
+
+  ws.send(JSON.stringify({ type: 'message.receive', data: payload }));
+  return payload;
+}
+
 export function onMessage(fn: MessageListener) {
   messageListeners.add(fn);
   return () => { messageListeners.delete(fn); };

@@ -395,6 +395,70 @@ class GenericChannelClient {
       },
     });
   }
+
+  editMessage(messageId, newContent) {
+    this.sendRaw({
+      type: 'message.edit',
+      data: {
+        messageId: messageId,
+        chatId: this.chatId,
+        senderId: this.senderId,
+        content: newContent,
+        timestamp: Date.now(),
+      },
+    });
+  }
+
+  deleteMessage(messageId) {
+    this.sendRaw({
+      type: 'message.delete',
+      data: {
+        messageId: messageId,
+        chatId: this.chatId,
+        senderId: this.senderId,
+        timestamp: Date.now(),
+      },
+    });
+  }
+
+  sendTyping(isTyping) {
+    this.sendRaw({
+      type: 'typing',
+      data: {
+        chatId: this.chatId,
+        senderId: this.senderId,
+        isTyping: !!isTyping,
+        timestamp: Date.now(),
+      },
+    });
+  }
+
+  sendFile(opts) {
+    if (!this.isOpen()) {
+      throw new Error('Socket is not connected.');
+    }
+
+    var payload = {
+      messageId: createStableId('msg'),
+      chatId: this.chatId,
+      chatType: this.chatType,
+      senderId: this.senderId,
+      senderName: this.senderName,
+      messageType: 'file',
+      content: opts.content || opts.fileName || 'File',
+      mediaUrl: opts.mediaUrl,
+      mimeType: opts.mimeType,
+      timestamp: Date.now(),
+    };
+    if (this.agentId) payload.agentId = this.agentId;
+
+    this.socketTask.send({
+      data: JSON.stringify({ type: 'message.receive', data: payload }),
+      fail: function () {},
+    });
+
+    return payload;
+  }
 }
 
 function createGenericChannelClient(options) {

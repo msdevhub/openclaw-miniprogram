@@ -25,6 +25,7 @@ export default defineConfig(({mode}) => {
             'react-vendor': ['react', 'react-dom', 'react-router-dom'],
             'motion': ['motion/react'],
             'markdown': ['react-markdown'],
+            'highlight': ['highlight.js/lib/core'],
           },
         },
       },
