@@ -3,7 +3,7 @@
   class="message-row {{message.sender === 'user' ? 'message-row--user' : 'message-row--ai'}}"
   style="animation-delay: {{delay}}ms;"
 >
-  <view wx:if=\"{{message.sender !== 'user'}}\" class=\"message-avatar\">{{agentEmoji}}</view>
+  <view wx:if="{{message.sender !== 'user'}}" class="message-avatar">{{agentEmoji}}</view>
 
   <view class="message-stack {{message.sender === 'user' ? 'message-stack--user' : 'message-stack--ai'}}">
     <view class="message-main {{message.sender === 'user' ? 'message-main--user' : 'message-main--ai'}}">
