@@ -14,6 +14,14 @@
 
 ## 连接方式
 
+### 直连模式 (WebSocket)
 ```
 ws://wolf-sg.southeastasia.cloudapp.azure.com:18080/ws?chatId=<chatId>&token=<token>&agentId=<agentId>
 ```
+
+### 中转网关模式 (Relay)
+```
+ws://<relay-host>:19080/client?channelId=<channelId>&chatId=<chatId>&token=<token>&agentId=<agentId>
+```
+
+> Relay 模式下，`serverUrl` 填 relay 客户端入口地址（如 `ws://relay-host:19080/client?channelId=demo`），客户端代码无需改动，`buildSocketUrl` 会自动追加 `chatId`/`token`/`agentId`。

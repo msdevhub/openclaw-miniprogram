@@ -16,7 +16,8 @@
 | 协议事件 | 方向 | Web | 小程序 |
 |---------|------|-----|--------|
 | `connection.open` | ← | ✅ | ✅ |
-| `history.sync` (direction) | ← | ✅ | ✅ |
+| `history.sync` (direction, agentId 隔离) | ← | ✅ | ✅ |
+| `history.get` (按 chatId 拉历史) | → | ✅ | ❌ |
 | `message.receive` (带 agentId/parentId) | → | ✅ | ✅ |
 | `message.send` (带 replyTo) | ← | ✅ | ✅ |
 | `thinking.start` | ← | ✅ | ✅ |
@@ -24,6 +25,7 @@
 | `thinking.end` | ← | ✅ | ✅ |
 | `agent.list.get` → `agent.list` | ↔ | ✅ | ✅ |
 | `agent.select` → `agent.selected` | ↔ | ✅ (API ready) | ✅ (API ready) |
+| `conversation.list.get` → `conversation.list` | ↔ | ✅ | ❌ |
 | `reaction.add` | ↔ | ✅ | ✅ |
 | `reaction.remove` | ↔ | ✅ | ✅ |
 | `channel.status.get` → `channel.status` | ↔ | ✅ | ✅ |

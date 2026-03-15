@@ -262,6 +262,26 @@ export function requestAgentList() {
   });
 }
 
+export function requestConversationList(agentId?: string) {
+  sendRaw({
+    type: 'conversation.list.get',
+    data: {
+      requestId: createStableId('conv-list'),
+      agentId: agentId || currentAgentId || undefined,
+    },
+  });
+}
+
+export function requestHistory(chatId: string) {
+  sendRaw({
+    type: 'history.get',
+    data: {
+      requestId: createStableId('history'),
+      chatId,
+    },
+  });
+}
+
 export function selectAgent(agentId: string | null) {
   currentAgentId = agentId || '';
   sendRaw({
