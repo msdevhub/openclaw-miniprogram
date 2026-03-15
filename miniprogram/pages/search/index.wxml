@@ -1,0 +1,63 @@
+<view class="shell-page">
+  <view class="screen">
+    <scroll-view class="screen-scroll screen-scroll--with-nav" scroll-y>
+      <view class="search-body" style="padding-top: {{contentTopInset}}px;">
+        <text class="screen-title">Search</text>
+
+        <view class="search-field search-field--lg">
+          <oc-icon name="search" tone="dark" size="34rpx" extraClass="search-field__icon" />
+          <input
+            class="search-field__input"
+            value="{{searchScreenQuery}}"
+            focus="{{true}}"
+            placeholder="Ask anything or search..."
+            placeholder-style="color: rgba(45, 52, 54, 0.35);"
+            bindinput="handleSearchInput"
+          />
+        </view>
+
+        <view class="search-section">
+          <text class="section-caption">Recent Searches</text>
+          <view class="search-history">
+            <view
+              wx:for="{{recentSearches}}"
+              wx:key="*this"
+              class="search-history__item"
+              data-label="{{item}}"
+              bindtap="handleSearchShortcut"
+              hover-class="search-history__item--pressed"
+            >
+              <oc-icon name="clock" tone="dark" size="26rpx" />
+              <text class="search-history__label">{{item}}</text>
+              <oc-icon name="arrow-right" tone="dark" size="24rpx" />
+            </view>
+          </view>
+        </view>
+
+        <view class="search-section">
+          <text class="section-caption">Quick Filters</text>
+          <view class="search-filters">
+            <view
+              wx:for="{{quickFilters}}"
+              wx:key="id"
+              class="search-filter"
+              data-label="{{item.label}}"
+              bindtap="handleSearchShortcut"
+              hover-class="button-pressed"
+            >
+              <oc-icon name="{{item.icon}}" tone="{{item.tone}}" size="24rpx" />
+              <text>{{item.label}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <bottom-nav
+    items="{{navItems}}"
+    currentScreen="{{currentScreen}}"
+    safeAreaBottom="{{safeAreaBottom}}"
+    bindnavigate="handleNavigate"
+  />
+</view>

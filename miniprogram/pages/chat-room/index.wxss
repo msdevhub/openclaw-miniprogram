@@ -1,0 +1,53 @@
+@import "../../theme/page-shell.wxss";
+
+.action-card {
+  margin: 8rpx 16rpx 16rpx 76rpx;
+  background: var(--color-surface);
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-16);
+  padding: 20rpx;
+}
+
+.action-card__title {
+  display: block;
+  font-size: 20rpx;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2rpx;
+  margin-bottom: 12rpx;
+}
+
+.action-card__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.action-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 20rpx;
+  background: var(--color-card);
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: 24rpx;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.action-chip--pressed {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.action-chip__label {
+  font-size: 24rpx;
+}
+
+.action-chip__badge {
+  font-size: 20rpx;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
