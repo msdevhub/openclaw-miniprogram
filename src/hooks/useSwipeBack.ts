@@ -30,6 +30,7 @@ export function useSwipeBack({
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const isValidSwipe = useRef(false);
+  const dragXRef = useRef(0);
 
   useEffect(() => {
     if (!enabled) return;
@@ -53,6 +54,13 @@ export function useSwipeBack({
       // Only continue if horizontal swipe is dominant
       if (Math.abs(deltaY) > Math.abs(deltaX)) {
         isValidSwipe.current = false;
+        // Reset state when cancelling due to vertical movement
+        setSwipeState({
+          isDragging: false,
+          dragX: 0,
+          dragProgress: 0,
+        });
+        dragXRef.current = 0;
         return;
       }
 
@@ -64,6 +72,7 @@ export function useSwipeBack({
         }
 
         const progress = Math.min(deltaX / threshold, 1);
+        dragXRef.current = deltaX;
         setSwipeState({
           isDragging: true,
           dragX: deltaX,
@@ -73,12 +82,13 @@ export function useSwipeBack({
     };
 
     const handleTouchEnd = () => {
-      if (!isValidSwipe.current) return;
+      // Always reset state on touch end if a drag was started
+      if (!isValidSwipe.current && !swipeState.isDragging) return;
 
-      const { dragX } = swipeState;
+      const dragX = dragXRef.current;
 
       // Trigger back navigation if threshold is exceeded
-      if (dragX > threshold && onSwipeBack) {
+      if (dragX > threshold && onSwipeBack && isValidSwipe.current) {
         onSwipeBack();
       }
 
@@ -89,6 +99,7 @@ export function useSwipeBack({
         dragProgress: 0,
       });
       isValidSwipe.current = false;
+      dragXRef.current = 0;
     };
 
     const handleTouchCancel = () => {
@@ -98,6 +109,7 @@ export function useSwipeBack({
         dragProgress: 0,
       });
       isValidSwipe.current = false;
+      dragXRef.current = 0;
     };
 
     // Add passive: false for preventDefault to work
@@ -112,7 +124,7 @@ export function useSwipeBack({
       document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [enabled, onSwipeBack, swipeState.dragX, threshold]);
+  }, [enabled, onSwipeBack, threshold]);
 
   return swipeState;
 }

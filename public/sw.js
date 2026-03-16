@@ -9,8 +9,8 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
   );
-  // Don't wait for old service worker to finish
-  self.skipWaiting();
+  // Don't skip waiting automatically - let the user control when to update
+  // skipWaiting will be called via message when user clicks update button
 });
 
 // Activate event - clean up old caches

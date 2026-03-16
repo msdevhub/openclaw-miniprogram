@@ -18,18 +18,24 @@ export function usePWAUpdate() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
-    let registration: ServiceWorkerRegistration | null = null;
+    let updateInterval: ReturnType<typeof setInterval> | undefined;
+    let refreshing = false;
+
+    // Controller change handler - only reload once
+    const handleControllerChange = () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    };
 
     // Register service worker and listen for updates
     navigator.serviceWorker.register('/sw.js')
       .then((reg) => {
-        registration = reg;
-
         // Check for updates on page load
         reg.update();
 
         // Check for updates every hour
-        const updateInterval = setInterval(() => {
+        updateInterval = setInterval(() => {
           reg.update();
         }, 60 * 60 * 1000);
 
@@ -48,18 +54,21 @@ export function usePWAUpdate() {
             }
           });
         });
-
-        return () => clearInterval(updateInterval);
       })
       .catch(() => {
         // Service worker registration failed, ignore
       });
 
     // Listen for controller change (new SW activated)
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      // Reload page when new service worker takes control
-      window.location.reload();
-    });
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+
+    // Cleanup function
+    return () => {
+      if (updateInterval) {
+        clearInterval(updateInterval);
+      }
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+    };
   }, []);
 
   const applyUpdate = () => {
