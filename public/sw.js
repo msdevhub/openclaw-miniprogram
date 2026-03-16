@@ -9,8 +9,12 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
   );
-  // Don't skip waiting automatically - let the user control when to update
-  // skipWaiting will be called via message when user clicks update button
+
+  // Only skip waiting on first install (no active controller)
+  // This allows updates to wait for user approval
+  if (!self.clients || self.clients.length === 0) {
+    self.skipWaiting();
+  }
 });
 
 // Activate event - clean up old caches
@@ -58,7 +62,7 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Listen for messages from clients
+// Listen for messages from clients (user-controlled update)
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();

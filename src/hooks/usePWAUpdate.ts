@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface PWAUpdateState {
   updateAvailable: boolean;
@@ -15,16 +15,17 @@ export function usePWAUpdate() {
     registration: null,
   });
 
+  const refreshingRef = useRef(false);
+
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
     let updateInterval: ReturnType<typeof setInterval> | undefined;
-    let refreshing = false;
 
-    // Controller change handler - only reload once
+    // Controller change handler - only reload once per session
     const handleControllerChange = () => {
-      if (refreshing) return;
-      refreshing = true;
+      if (refreshingRef.current) return;
+      refreshingRef.current = true;
       window.location.reload();
     };
 
@@ -62,7 +63,7 @@ export function usePWAUpdate() {
     // Listen for controller change (new SW activated)
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
 
-    // Cleanup function
+    // Cleanup function - properly cleanup interval and listener
     return () => {
       if (updateInterval) {
         clearInterval(updateInterval);

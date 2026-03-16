@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useMotionValue, useSpring } from 'motion/react';
 
 interface SwipeBackOptions {
   onSwipeBack?: () => void;
@@ -6,61 +7,60 @@ interface SwipeBackOptions {
   enabled?: boolean;
 }
 
-interface SwipeState {
-  isDragging: boolean;
-  dragX: number;
-  dragProgress: number; // 0-1 indicating swipe progress
-}
-
 /**
  * Hook for handling iOS-style swipe-back gestures
- * Detects swipe from left edge and provides progress feedback
+ * Uses Framer Motion's useMotionValue for smooth, performant drag without React re-renders
  */
 export function useSwipeBack({
   onSwipeBack,
   threshold = 100,
   enabled = true
 }: SwipeBackOptions = {}) {
-  const [swipeState, setSwipeState] = useState<SwipeState>({
-    isDragging: false,
-    dragX: 0,
-    dragProgress: 0,
-  });
+  // Use MotionValue for drag position - updates directly in native code without React re-renders
+  const dragX = useMotionValue(0);
+  const dragProgress = useMotionValue(0);
 
-  const touchStartX = useRef(0);
-  const touchStartY = useRef(0);
-  const isValidSwipe = useRef(false);
-  const dragXRef = useRef(0);
+  // Smooth spring animation when releasing below threshold
+  const springX = useSpring(dragX, { stiffness: 300, damping: 30 });
+
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const isValidSwipeRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const onSwipeBackRef = useRef(onSwipeBack);
+  const thresholdRef = useRef(threshold);
+
+  // Keep refs in sync with props
+  useEffect(() => {
+    onSwipeBackRef.current = onSwipeBack;
+    thresholdRef.current = threshold;
+  }, [onSwipeBack, threshold]);
 
   useEffect(() => {
     if (!enabled) return;
 
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
-      touchStartX.current = touch.clientX;
-      touchStartY.current = touch.clientY;
+      touchStartXRef.current = touch.clientX;
+      touchStartYRef.current = touch.clientY;
 
       // Only activate if touch starts near the left edge (within 30px)
-      isValidSwipe.current = touch.clientX < 30;
+      isValidSwipeRef.current = touch.clientX < 30;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isValidSwipe.current) return;
+      if (!isValidSwipeRef.current) return;
 
       const touch = e.touches[0];
-      const deltaX = touch.clientX - touchStartX.current;
-      const deltaY = touch.clientY - touchStartY.current;
+      const deltaX = touch.clientX - touchStartXRef.current;
+      const deltaY = touch.clientY - touchStartYRef.current;
 
-      // Only continue if horizontal swipe is dominant
+      // Cancel if vertical swipe is dominant
       if (Math.abs(deltaY) > Math.abs(deltaX)) {
-        isValidSwipe.current = false;
-        // Reset state when cancelling due to vertical movement
-        setSwipeState({
-          isDragging: false,
-          dragX: 0,
-          dragProgress: 0,
-        });
-        dragXRef.current = 0;
+        isValidSwipeRef.current = false;
+        isDraggingRef.current = false;
+        dragX.set(0);
+        dragProgress.set(0);
         return;
       }
 
@@ -71,48 +71,40 @@ export function useSwipeBack({
           e.preventDefault();
         }
 
-        const progress = Math.min(deltaX / threshold, 1);
-        dragXRef.current = deltaX;
-        setSwipeState({
-          isDragging: true,
-          dragX: deltaX,
-          dragProgress: progress,
-        });
+        isDraggingRef.current = true;
+        const progress = Math.min(deltaX / thresholdRef.current, 1);
+
+        // Update MotionValues directly - no React re-render
+        dragX.set(deltaX);
+        dragProgress.set(progress);
       }
     };
 
     const handleTouchEnd = () => {
-      // Always reset state on touch end if a drag was started
-      if (!isValidSwipe.current && !swipeState.isDragging) return;
+      if (!isDraggingRef.current && !isValidSwipeRef.current) return;
 
-      const dragX = dragXRef.current;
+      const currentDragX = dragX.get();
 
       // Trigger back navigation if threshold is exceeded
-      if (dragX > threshold && onSwipeBack && isValidSwipe.current) {
-        onSwipeBack();
+      if (currentDragX > thresholdRef.current && isValidSwipeRef.current && onSwipeBackRef.current) {
+        onSwipeBackRef.current();
       }
 
       // Reset state
-      setSwipeState({
-        isDragging: false,
-        dragX: 0,
-        dragProgress: 0,
-      });
-      isValidSwipe.current = false;
-      dragXRef.current = 0;
+      dragX.set(0);
+      dragProgress.set(0);
+      isValidSwipeRef.current = false;
+      isDraggingRef.current = false;
     };
 
     const handleTouchCancel = () => {
-      setSwipeState({
-        isDragging: false,
-        dragX: 0,
-        dragProgress: 0,
-      });
-      isValidSwipe.current = false;
-      dragXRef.current = 0;
+      dragX.set(0);
+      dragProgress.set(0);
+      isValidSwipeRef.current = false;
+      isDraggingRef.current = false;
     };
 
-    // Add passive: false for preventDefault to work
+    // Add passive: false for preventDefault to work in touchmove
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -124,7 +116,10 @@ export function useSwipeBack({
       document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('touchcancel', handleTouchCancel);
     };
-  }, [enabled, onSwipeBack, threshold]);
+  }, [enabled, dragX, dragProgress]); // Stable dependencies
 
-  return swipeState;
+  return {
+    dragX: springX, // Return spring value for smooth animation on release
+    dragProgress,
+  };
 }

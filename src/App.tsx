@@ -113,7 +113,7 @@ function AppShell() {
   const canGoBack = ['chat_room', 'preferences', 'pairing'].includes(currentScreen);
 
   // Use swipe-back hook for iOS-style gestures
-  const swipeState = useSwipeBack({
+  const { dragX, dragProgress } = useSwipeBack({
     onSwipeBack: handleSwipeBack,
     threshold: 100,
     enabled: canGoBack,
@@ -144,13 +144,6 @@ function AppShell() {
 
   const showBottomNav = ['chats', 'dashboard', 'profile', 'search'].includes(currentScreen);
 
-  // Calculate animation values based on swipe state
-  const animateX = swipeState.isDragging ? swipeState.dragX : 0;
-  const animateOpacity = swipeState.isDragging ? 1 - swipeState.dragProgress * 0.3 : 1;
-  const animateTransition = swipeState.isDragging
-    ? { type: 'tween' as const, duration: 0 }
-    : { type: 'spring' as const, stiffness: 300, damping: 30 };
-
   return (
     <div className="relative w-full h-[100dvh] bg-[#F8FAFB] dark:bg-[#1a1b2e] text-[#2D3436] dark:text-[#e2e8f0] overflow-hidden flex justify-center font-sans">
       <div className="w-full max-w-md h-full relative bg-[#F8FAFB] dark:bg-[#1a1b2e] shadow-2xl overflow-hidden">
@@ -165,18 +158,22 @@ function AppShell() {
         <IOSInstallPrompt show={showInstallPrompt} />
 
         <AnimatePresence mode="popLayout" initial={false}>
+          {/* Outer motion.div: handles screen enter/exit transitions only */}
           <motion.div
             key={currentScreen}
             initial={{ opacity: 0, x: 40 }}
-            animate={{
-              opacity: animateOpacity,
-              x: animateX,
-            }}
+            animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
-            transition={animateTransition}
-            className="absolute inset-0 overflow-y-auto"
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="absolute inset-0"
           >
-            {renderScreen()}
+            {/* Inner motion.div: handles swipe-back drag (decoupled from transitions) */}
+            <motion.div
+              style={{ x: dragX }}
+              className="h-full overflow-y-auto"
+            >
+              {renderScreen()}
+            </motion.div>
           </motion.div>
         </AnimatePresence>
 
