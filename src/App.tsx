@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import Onboarding from './screens/Onboarding';
@@ -10,7 +10,12 @@ import Search from './screens/Search';
 import Preferences from './screens/Preferences';
 import Pairing from './screens/Pairing';
 import BottomNav from './components/BottomNav';
+import UpdateBanner from './components/UpdateBanner';
+import IOSInstallPrompt from './components/IOSInstallPrompt';
 import { setActiveConnectionId } from './services/connectionStore';
+import { useSwipeBack } from './hooks/useSwipeBack';
+import { usePWAUpdate } from './hooks/usePWAUpdate';
+import { useIOSPWA } from './hooks/useIOSPWA';
 
 export type Screen = 'onboarding' | 'chats' | 'chat_room' | 'dashboard' | 'profile' | 'search' | 'preferences' | 'pairing';
 
@@ -73,6 +78,12 @@ function AppShell() {
   const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
   const [activeAgentId, setActiveAgentId] = useState<string | null>(initialFromUrl.chatId ?? null);
 
+  // PWA update detection
+  const { updateAvailable, applyUpdate, dismissUpdate } = usePWAUpdate();
+
+  // iOS PWA optimizations
+  const { showInstallPrompt } = useIOSPWA();
+
   // URL → Screen（浏览器前进/后退）
   useEffect(() => {
     const { screen, chatId } = pathToScreen(location.pathname);
@@ -91,6 +102,22 @@ function AppShell() {
       routerNavigate(SCREEN_TO_PATH[screen]);
     }
   }, [routerNavigate]);
+
+  // Handle swipe-back gesture
+  const handleSwipeBack = useCallback(() => {
+    // Use browser history to go back
+    window.history.back();
+  }, []);
+
+  // Determine if swipe-back should be enabled
+  const canGoBack = ['chat_room', 'preferences', 'pairing'].includes(currentScreen);
+
+  // Use swipe-back hook for iOS-style gestures
+  const { dragX, dragProgress } = useSwipeBack({
+    onSwipeBack: handleSwipeBack,
+    threshold: 100,
+    enabled: canGoBack,
+  });
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -118,9 +145,20 @@ function AppShell() {
   const showBottomNav = ['chats', 'dashboard', 'profile', 'search'].includes(currentScreen);
 
   return (
-    <div className="relative w-full h-[100dvh] bg-[#F8FAFB] text-[#2D3436] overflow-hidden flex justify-center font-sans">
-      <div className="w-full max-w-md h-full relative bg-[#F8FAFB] shadow-2xl overflow-hidden">
+    <div className="relative w-full h-[100dvh] bg-[#F8FAFB] dark:bg-[#1a1b2e] text-[#2D3436] dark:text-[#e2e8f0] overflow-hidden flex justify-center font-sans">
+      <div className="w-full max-w-md h-full relative bg-[#F8FAFB] dark:bg-[#1a1b2e] shadow-2xl overflow-hidden">
+        {/* PWA Update Banner */}
+        <UpdateBanner
+          isVisible={updateAvailable}
+          onUpdate={applyUpdate}
+          onDismiss={dismissUpdate}
+        />
+
+        {/* iOS Install Prompt */}
+        <IOSInstallPrompt show={showInstallPrompt} />
+
         <AnimatePresence mode="popLayout" initial={false}>
+          {/* Outer motion.div: handles screen enter/exit transitions only */}
           <motion.div
             key={currentScreen}
             initial={{ opacity: 0, x: 40 }}
@@ -129,7 +167,12 @@ function AppShell() {
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="absolute inset-0 overflow-y-auto"
           >
-            {renderScreen()}
+            {/* Inner motion.div: handles swipe-back drag (decoupled from transitions) */}
+            <motion.div
+              style={{ x: dragX }}
+            >
+              {renderScreen()}
+            </motion.div>
           </motion.div>
         </AnimatePresence>
 
