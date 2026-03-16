@@ -37,7 +37,13 @@ export function useSwipeBack({
   }, [onSwipeBack, threshold]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      // Immediately reset when disabled
+      dragX.set(0);
+      dragProgress.set(0);
+      springX.jump(0);
+      return;
+    }
 
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
@@ -61,6 +67,7 @@ export function useSwipeBack({
         isDraggingRef.current = false;
         dragX.set(0);
         dragProgress.set(0);
+        springX.jump(0);
         return;
       }
 
@@ -88,9 +95,11 @@ export function useSwipeBack({
       // Trigger back navigation if threshold is exceeded
       if (currentDragX > thresholdRef.current && isValidSwipeRef.current && onSwipeBackRef.current) {
         onSwipeBackRef.current();
+        // Immediately jump to 0 after navigation to prevent spring animation issues
+        springX.jump(0);
       }
 
-      // Reset state
+      // Reset state - let spring animate back smoothly if not navigating
       dragX.set(0);
       dragProgress.set(0);
       isValidSwipeRef.current = false;
@@ -98,8 +107,10 @@ export function useSwipeBack({
     };
 
     const handleTouchCancel = () => {
+      // Immediately jump to 0 on cancel to prevent stuck states
       dragX.set(0);
       dragProgress.set(0);
+      springX.jump(0);
       isValidSwipeRef.current = false;
       isDraggingRef.current = false;
     };
@@ -115,8 +126,13 @@ export function useSwipeBack({
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('touchcancel', handleTouchCancel);
+
+      // Clean up: ensure spring is reset on unmount
+      dragX.set(0);
+      dragProgress.set(0);
+      springX.jump(0);
     };
-  }, [enabled, dragX, dragProgress]); // Stable dependencies
+  }, [enabled, dragX, dragProgress, springX]); // Stable dependencies
 
   return {
     dragX: springX, // Return spring value for smooth animation on release
