@@ -165,12 +165,11 @@ function AppShell() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="absolute inset-0"
+            className="absolute inset-0 overflow-y-auto"
           >
             {/* Inner motion.div: handles swipe-back drag (decoupled from transitions) */}
             <motion.div
               style={{ x: dragX }}
-              className="h-full overflow-y-auto"
             >
               {renderScreen()}
             </motion.div>
