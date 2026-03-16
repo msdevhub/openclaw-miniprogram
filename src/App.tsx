@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import Onboarding from './screens/Onboarding';
@@ -10,7 +10,12 @@ import Search from './screens/Search';
 import Preferences from './screens/Preferences';
 import Pairing from './screens/Pairing';
 import BottomNav from './components/BottomNav';
+import UpdateBanner from './components/UpdateBanner';
+import IOSInstallPrompt from './components/IOSInstallPrompt';
 import { setActiveConnectionId } from './services/connectionStore';
+import { useSwipeBack } from './hooks/useSwipeBack';
+import { usePWAUpdate } from './hooks/usePWAUpdate';
+import { useIOSPWA } from './hooks/useIOSPWA';
 
 export type Screen = 'onboarding' | 'chats' | 'chat_room' | 'dashboard' | 'profile' | 'search' | 'preferences' | 'pairing';
 
@@ -72,6 +77,13 @@ function AppShell() {
 
   const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
   const [activeAgentId, setActiveAgentId] = useState<string | null>(initialFromUrl.chatId ?? null);
+  const navigationHistoryRef = useRef<Screen[]>([initialScreen]);
+
+  // PWA update detection
+  const { updateAvailable, applyUpdate, dismissUpdate } = usePWAUpdate();
+
+  // iOS PWA optimizations
+  const { showInstallPrompt } = useIOSPWA();
 
   // URL → Screen（浏览器前进/后退）
   useEffect(() => {
@@ -84,6 +96,9 @@ function AppShell() {
     setCurrentScreen(screen);
     if (chatId) setActiveAgentId(chatId);
 
+    // Track navigation history for swipe gestures
+    navigationHistoryRef.current.push(screen);
+
     // Screen → URL
     if (screen === 'chat_room' && chatId) {
       routerNavigate(`/chat/${chatId}`);
@@ -91,6 +106,22 @@ function AppShell() {
       routerNavigate(SCREEN_TO_PATH[screen]);
     }
   }, [routerNavigate]);
+
+  // Handle swipe-back gesture
+  const handleSwipeBack = useCallback(() => {
+    // Use browser history to go back
+    window.history.back();
+  }, []);
+
+  // Determine if swipe-back should be enabled
+  const canGoBack = ['chat_room', 'preferences', 'pairing'].includes(currentScreen);
+
+  // Use swipe-back hook for iOS-style gestures
+  const swipeState = useSwipeBack({
+    onSwipeBack: handleSwipeBack,
+    threshold: 100,
+    enabled: canGoBack,
+  });
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -117,14 +148,34 @@ function AppShell() {
 
   const showBottomNav = ['chats', 'dashboard', 'profile', 'search'].includes(currentScreen);
 
+  // Calculate animation values based on swipe state
+  const animateX = swipeState.isDragging ? swipeState.dragX : 0;
+  const animateOpacity = swipeState.isDragging ? 1 - swipeState.dragProgress * 0.3 : 1;
+
   return (
-    <div className="relative w-full h-[100dvh] bg-[#F8FAFB] text-[#2D3436] overflow-hidden flex justify-center font-sans">
-      <div className="w-full max-w-md h-full relative bg-[#F8FAFB] shadow-2xl overflow-hidden">
+    <div className="relative w-full h-[100dvh] bg-[#F8FAFB] dark:bg-[#1a1b2e] text-[#2D3436] dark:text-[#e2e8f0] overflow-hidden flex justify-center font-sans">
+      <div className="w-full max-w-md h-full relative bg-[#F8FAFB] dark:bg-[#1a1b2e] shadow-2xl overflow-hidden">
+        {/* PWA Update Banner */}
+        <UpdateBanner
+          isVisible={updateAvailable}
+          onUpdate={applyUpdate}
+          onDismiss={dismissUpdate}
+        />
+
+        {/* iOS Install Prompt */}
+        <IOSInstallPrompt show={showInstallPrompt} />
+
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={currentScreen}
             initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
+            animate={{
+              opacity: animateOpacity,
+              x: animateX,
+              transition: swipeState.isDragging
+                ? { type: 'tween', duration: 0 }
+                : { type: 'spring', stiffness: 300, damping: 30 }
+            }}
             exit={{ opacity: 0, x: -40 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="absolute inset-0 overflow-y-auto"
