@@ -40,6 +40,12 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
       serverUrl: conn.serverUrl,
       token: conn.token,
     });
+
+    // If already connected (connect skipped due to same target),
+    // status/connection.open callbacks won't fire — request agents directly
+    if (channel.getStatus() === 'connected') {
+      try { channel.requestAgentList(); } catch { /* ignore */ }
+    }
   }, []);
 
   // Connect only on first mount or when activeConnId changes
@@ -105,11 +111,11 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
           <h1 className="text-3xl font-bold tracking-tight mb-6">Chats</h1>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-          <div className="w-16 h-16 bg-[#EDF2F0] rounded-full flex items-center justify-center mb-4">
-            <Server size={28} className="text-[#2D3436]/30" />
+          <div className="w-16 h-16 bg-[#EDF2F0] dark:bg-[#2d3748] rounded-full flex items-center justify-center mb-4">
+            <Server size={28} className="text-[#2D3436]/30 dark:text-[#e2e8f0]/30" />
           </div>
-          <p className="text-[#2D3436]/50 text-[15px] mb-1">No server connected</p>
-          <p className="text-[#2D3436]/30 text-[13px] mb-6">Add a server in Profile to get started</p>
+          <p className="text-[#2D3436]/50 dark:text-[#e2e8f0]/50 text-[15px] mb-1">No server connected</p>
+          <p className="text-[#2D3436]/30 dark:text-[#e2e8f0]/30 text-[13px] mb-6">Add a server in Profile to get started</p>
           <Button onClick={onAddServer}>
             <Server size={16} /> Add Server
           </Button>
@@ -120,14 +126,14 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
 
   return (
     <div className="flex flex-col h-full pb-32">
-      <div className="px-6 pt-12 pb-4 sticky top-0 bg-[#F8FAFB]/80 backdrop-blur-xl z-10">
+      <div className="px-6 pt-12 pb-4 sticky top-0 bg-[#F8FAFB]/80 dark:bg-[#1a1b2e]/80 backdrop-blur-xl z-10">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-3xl font-bold tracking-tight">Chats</h1>
           <div className="flex items-center gap-2">
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => { hasFetched.current = false; fetchAgents(); }}
-              className="p-2 text-[#2D3436]/30 hover:text-[#67B88B] transition-colors"
+              className="p-2 text-[#2D3436]/30 dark:text-[#e2e8f0]/30 hover:text-[#67B88B] transition-colors"
             >
               <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
             </motion.button>
@@ -136,15 +142,15 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
             </Badge>
           </div>
         </div>
-        <p className="text-[12px] text-[#2D3436]/40 mb-4 truncate">{activeConn.serverUrl}</p>
+        <p className="text-[12px] text-[#2D3436]/40 dark:text-[#e2e8f0]/40 mb-4 truncate">{activeConn.serverUrl}</p>
 
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#2D3436]/40" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#2D3436]/40 dark:text-[#e2e8f0]/40" size={20} />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search agents..."
-            className="pl-12 rounded-full bg-white"
+            className="pl-12 rounded-full bg-white dark:bg-[#232437]"
           />
         </div>
       </div>
@@ -153,7 +159,7 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16">
             <Loader2 size={28} className="text-[#67B88B] animate-spin mb-3" />
-            <p className="text-[#2D3436]/40 text-[14px]">Loading agents…</p>
+            <p className="text-[#2D3436]/40 dark:text-[#e2e8f0]/40 text-[14px]">Loading agents…</p>
           </div>
         ) : filtered.length > 0 ? filtered.map((agent, index) => (
           <motion.div
@@ -163,7 +169,7 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
             transition={{ delay: index * 0.05 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onOpenChat(agent.id)}
-            className="bg-white p-4 rounded-[24px] flex items-center gap-4 shadow-sm border border-[#EDF2F0]/50 cursor-pointer"
+            className="bg-white dark:bg-[#232437] p-4 rounded-[24px] flex items-center gap-4 shadow-sm border border-[#EDF2F0]/50 dark:border-[#2d3748]/50 cursor-pointer"
           >
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#67B88B] to-[#4a9a70] flex-shrink-0 flex items-center justify-center text-white shadow-sm text-2xl">
               {agent.identityEmoji || <Bot size={24} />}
@@ -175,11 +181,11 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
                   <Badge className="text-[10px]">default</Badge>
                 )}
               </div>
-              <p className="text-[13px] text-[#2D3436]/40 truncate">{agent.model || `Agent: ${agent.id}`}</p>
+              <p className="text-[13px] text-[#2D3436]/40 dark:text-[#e2e8f0]/40 truncate">{agent.model || `Agent: ${agent.id}`}</p>
             </div>
           </motion.div>
         )) : (
-          <div className="text-center text-[#2D3436]/40 mt-10">No agents found</div>
+          <div className="text-center text-[#2D3436]/40 dark:text-[#e2e8f0]/40 mt-10">No agents found</div>
         )}
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, Server, ArrowRight, Link2, QrCode, Settings2, Camera } from 'lucide-react';
+import { ChevronLeft, Server, ArrowRight, Link2, QrCode, Settings2, Camera, ClipboardPaste } from 'lucide-react';
 import { addConnection } from '../services/connectionStore';
 import { getUserId } from '../App';
 import { Button } from '../components/ui/button';
@@ -158,10 +158,10 @@ export default function Pairing({ onBack, onPaired }: { onBack: () => void; onPa
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[#F8FAFB]">
+    <div className="flex flex-col h-full bg-[#F8FAFB] dark:bg-[#1a1b2e]">
       {/* Header */}
-      <div className="px-4 py-4 sticky top-0 bg-[#F8FAFB]/80 backdrop-blur-xl z-20 flex items-center justify-between">
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { stopScan(); onBack(); }} className="p-2 -ml-2 text-[#2D3436]">
+      <div className="px-4 py-4 sticky top-0 bg-[#F8FAFB]/80 dark:bg-[#1a1b2e]/80 backdrop-blur-xl z-20 flex items-center justify-between">
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => { stopScan(); onBack(); }} className="p-2 -ml-2 text-[#2D3436] dark:text-[#e2e8f0]">
           <ChevronLeft size={28} />
         </motion.button>
         <h2 className="font-semibold text-[17px]">Connect Server</h2>
@@ -179,11 +179,11 @@ export default function Pairing({ onBack, onPaired }: { onBack: () => void; onPa
             <Server size={24} className="text-white" />
           </motion.div>
           <h1 className="text-xl font-bold mb-1">Connect Workspace</h1>
-          <p className="text-[#2D3436]/50 text-[14px]">Paste a URL, scan QR code, or configure manually</p>
+          <p className="text-[#2D3436]/50 dark:text-[#e2e8f0]/50 text-[14px]">Paste a URL, scan QR code, or configure manually</p>
         </div>
 
         {/* Tab selector */}
-        <div className="flex bg-white rounded-full p-1 border border-[#EDF2F0] shadow-sm">
+        <div className="flex bg-white dark:bg-[#232437] rounded-full p-1 border border-[#EDF2F0] dark:border-[#2d3748] shadow-sm">
           {tabs.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -192,7 +192,7 @@ export default function Pairing({ onBack, onPaired }: { onBack: () => void; onPa
                 key={t.id}
                 onClick={() => { setTab(t.id); if (t.id !== 'qr') stopScan(); setError(''); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-full text-[13px] font-medium transition-all ${
-                  active ? 'bg-[#67B88B] text-white shadow-md' : 'text-[#2D3436]/50'
+                  active ? 'bg-[#67B88B] text-white shadow-md' : 'text-[#2D3436]/50 dark:text-[#e2e8f0]/50'
                 }`}
               >
                 <Icon size={15} />
@@ -216,15 +216,31 @@ export default function Pairing({ onBack, onPaired }: { onBack: () => void; onPa
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             <Card className="p-5 space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1.5">Connection URL</label>
-                <Input
-                  value={urlInput}
-                  onChange={(e) => { setUrlInput(e.target.value); setError(''); }}
-                  placeholder="ws://host:18080/ws?chatId=xxx&token=xxx"
-                />
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1.5">Connection URL</label>
+                <div className="relative">
+                  <Input
+                    value={urlInput}
+                    onChange={(e) => { setUrlInput(e.target.value); setError(''); }}
+                    placeholder="ws://host:18080/ws?chatId=xxx&token=xxx"
+                    className="pr-12"
+                  />
+                  <motion.button
+                    whileTap={{ scale: 0.85 }}
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const clip = await navigator.clipboard.readText();
+                        if (clip) { setUrlInput(clip); setError(''); }
+                      } catch { /* clipboard denied */ }
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#2D3436]/30 dark:text-[#e2e8f0]/30 hover:text-[#67B88B] transition-colors rounded-full"
+                  >
+                    <ClipboardPaste size={18} />
+                  </motion.button>
+                </div>
               </div>
-              <p className="text-[11px] text-[#2D3436]/40 leading-relaxed">
-                Supports: <code className="bg-[#EDF2F0] px-1 rounded text-[10px]">ws://</code> / <code className="bg-[#EDF2F0] px-1 rounded text-[10px]">wss://</code> with query params, or <code className="bg-[#EDF2F0] px-1 rounded text-[10px]">openclaw://connect?serverUrl=...&token=...</code>
+              <p className="text-[11px] text-[#2D3436]/40 dark:text-[#e2e8f0]/40 leading-relaxed">
+                Supports: <code className="bg-[#EDF2F0] dark:bg-[#2d3748] px-1 rounded text-[10px]">ws://</code> / <code className="bg-[#EDF2F0] dark:bg-[#2d3748] px-1 rounded text-[10px]">wss://</code> with query params, or <code className="bg-[#EDF2F0] dark:bg-[#2d3748] px-1 rounded text-[10px]">openclaw://connect?serverUrl=...&token=...</code>
               </p>
             </Card>
             <Button size="lg" className="w-full" onClick={handleUrlLogin}>
@@ -247,8 +263,8 @@ export default function Pairing({ onBack, onPaired }: { onBack: () => void; onPa
                 </div>
               ) : (
                 <div className="flex flex-col items-center py-8">
-                  <QrCode size={48} className="text-[#2D3436]/15 mb-4" />
-                  <p className="text-[#2D3436]/40 text-[14px] mb-4">Scan a server QR code to connect</p>
+                  <QrCode size={48} className="text-[#2D3436]/15 dark:text-[#e2e8f0]/15 mb-4" />
+                  <p className="text-[#2D3436]/40 dark:text-[#e2e8f0]/40 text-[14px] mb-4">Scan a server QR code to connect</p>
                   <Button onClick={startScan}>
                     <Camera size={18} /> Start Camera
                   </Button>
@@ -258,7 +274,7 @@ export default function Pairing({ onBack, onPaired }: { onBack: () => void; onPa
             {scanning && (
               <Button variant="outline" className="w-full" onClick={stopScan}>Stop Scanning</Button>
             )}
-            <p className="text-[11px] text-[#2D3436]/30 text-center">
+            <p className="text-[11px] text-[#2D3436]/30 dark:text-[#e2e8f0]/30 text-center">
               {'BarcodeDetector' in window ? 'QR detection supported' : '⚠️ BarcodeDetector not available in this browser. Try Chrome or Edge.'}
             </p>
           </motion.div>
@@ -269,27 +285,27 @@ export default function Pairing({ onBack, onPaired }: { onBack: () => void; onPa
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             <Card className="p-5 space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1.5">Connection Name</label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1.5">Connection Name</label>
                 <Input value={name} onChange={(e) => { setName(e.target.value); setError(''); }} placeholder="e.g. My Dev Server" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1.5">Display Name</label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1.5">Display Name</label>
                 <Input value={displayName} onChange={(e) => { setDisplayName(e.target.value); setError(''); }} placeholder="e.g. Alex Developer" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1.5">Generic Channel WS URL</label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1.5">Generic Channel WS URL</label>
                 <Input value={serverUrl} onChange={(e) => { setServerUrl(e.target.value); setError(''); }} placeholder="ws://host:18080/ws" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1.5">Auth Token <span className="text-[#2D3436]/30 font-normal">(optional)</span></label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1.5">Auth Token <span className="text-[#2D3436]/30 dark:text-[#e2e8f0]/30 font-normal">(optional)</span></label>
                 <Input value={token} onChange={(e) => { setToken(e.target.value); setError(''); }} placeholder="gc_user_xxxxxxxxx" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1.5">Chat ID <span className="text-[#2D3436]/30 font-normal">(token auth)</span></label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1.5">Chat ID <span className="text-[#2D3436]/30 dark:text-[#e2e8f0]/30 font-normal">(token auth)</span></label>
                 <Input value={chatId} onChange={(e) => { setChatId(e.target.value); setError(''); }} placeholder="gc-test-main" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1.5">Sender ID <span className="text-[#2D3436]/30 font-normal">(token auth)</span></label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1.5">Sender ID <span className="text-[#2D3436]/30 dark:text-[#e2e8f0]/30 font-normal">(token auth)</span></label>
                 <Input value={senderId} onChange={(e) => { setSenderId(e.target.value); setError(''); }} placeholder="gc-test-main" />
               </div>
             </Card>

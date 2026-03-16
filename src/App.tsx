@@ -13,6 +13,7 @@ import BottomNav from './components/BottomNav';
 import UpdateBanner from './components/UpdateBanner';
 import IOSInstallPrompt from './components/IOSInstallPrompt';
 import { setActiveConnectionId } from './services/connectionStore';
+import * as clawChannel from './services/clawChannel';
 import { useSwipeBack } from './hooks/useSwipeBack';
 import { usePWAUpdate } from './hooks/usePWAUpdate';
 import { useIOSPWA } from './hooks/useIOSPWA';
@@ -136,7 +137,7 @@ function AppShell() {
       case 'preferences':
         return <Preferences onBack={() => navigate('profile')} />;
       case 'pairing':
-        return <Pairing onBack={() => navigate('profile')} onPaired={(connId) => { setActiveConnectionId(connId); navigate('chats'); }} />;
+        return <Pairing onBack={() => navigate('profile')} onPaired={(connId) => { clawChannel.close(); localStorage.removeItem('openclaw.agentList'); localStorage.removeItem('openclaw.channelStatus'); setActiveConnectionId(connId); navigate('chats'); }} />;
       default:
         return <Onboarding onGetStarted={() => navigate('chats')} />;
     }

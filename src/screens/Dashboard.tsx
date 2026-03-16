@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Activity, Server, Wifi, WifiOff, Users, MessageSquare } from 'lucide-react';
+import { Activity, Server, Wifi, WifiOff, Users, MessageSquare, RefreshCw } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { getActiveConnection } from '../services/connectionStore';
 import * as channel from '../services/clawChannel';
 import { getUserId } from '../App';
+import { motion } from 'motion/react';
 
 type ChannelStatus = {
   configured: boolean;
@@ -19,8 +20,23 @@ type ChannelStatus = {
   connectedSocketCount: number;
 };
 
+const CACHE_KEY = 'openclaw.channelStatus';
+
+function loadCachedStatus(): ChannelStatus | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function cacheStatus(s: ChannelStatus) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(s)); } catch { /* ignore */ }
+}
+
 export default function Dashboard() {
-  const [status, setStatus] = useState<ChannelStatus | null>(null);
+  const cached = loadCachedStatus();
+  const [status, setStatus] = useState<ChannelStatus | null>(cached);
+  const [loading, setLoading] = useState(!cached);
   const [wsStatus, setWsStatus] = useState(channel.getStatus());
   const activeConn = getActiveConnection();
 
@@ -38,7 +54,6 @@ export default function Dashboard() {
 
     const unsubMsg = channel.onMessage((packet) => {
       if (packet.type === 'connection.open') {
-        // Request channel status
         try {
           channel.sendRaw({
             type: 'channel.status.get',
@@ -47,13 +62,25 @@ export default function Dashboard() {
         } catch { /* ignore */ }
       }
       if (packet.type === 'channel.status') {
-        setStatus(packet.data as unknown as ChannelStatus);
+        const s = packet.data as unknown as ChannelStatus;
+        setStatus(s);
+        cacheStatus(s);
+        setLoading(false);
       }
     });
 
-    const unsubStatus = channel.onStatus((s) => setWsStatus(s));
+    const unsubStatus = channel.onStatus((s) => {
+      setWsStatus(s);
+      if (s === 'connected') {
+        try {
+          channel.sendRaw({
+            type: 'channel.status.get',
+            data: { requestId: `status-${Date.now()}`, includeChats: false },
+          });
+        } catch { /* ignore */ }
+      }
+    });
 
-    // Refresh every 10s
     const interval = setInterval(() => {
       try {
         channel.sendRaw({
@@ -74,11 +101,30 @@ export default function Dashboard() {
     <div className="flex flex-col h-full pb-32 px-6 pt-12">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Resources</h1>
-        {activeConn && (
-          <Badge variant={wsStatus === 'connected' ? 'success' : 'warning'}>
-            {wsStatus === 'connected' ? 'Live' : 'Offline'}
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {activeConn && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => {
+                setLoading(true);
+                try {
+                  channel.sendRaw({
+                    type: 'channel.status.get',
+                    data: { requestId: `status-${Date.now()}`, includeChats: false },
+                  });
+                } catch { /* ignore */ }
+              }}
+              className="p-2 text-[#2D3436]/30 dark:text-[#e2e8f0]/30 hover:text-[#67B88B] transition-colors"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            </motion.button>
+          )}
+          {activeConn && (
+            <Badge variant={wsStatus === 'connected' ? 'success' : 'warning'}>
+              {wsStatus === 'connected' ? 'Live' : 'Offline'}
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -90,7 +136,11 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {status ? (
+            {loading && !status ? (
+              <div className="grid grid-cols-2 gap-3">
+                <SkeletonItem /><SkeletonItem /><SkeletonItem /><SkeletonItem />
+              </div>
+            ) : status ? (
               <div className="grid grid-cols-2 gap-3">
                 <StatusItem
                   icon={<Wifi size={16} className="text-[#67B88B]" />}
@@ -114,11 +164,11 @@ export default function Dashboard() {
                 />
               </div>
             ) : activeConn ? (
-              <div className="flex items-center justify-center py-8 text-[#2D3436]/30 text-[14px]">
-                {wsStatus === 'connected' ? 'Loading status…' : 'Connecting…'}
+              <div className="grid grid-cols-2 gap-3">
+                <SkeletonItem /><SkeletonItem /><SkeletonItem /><SkeletonItem />
               </div>
             ) : (
-              <div className="flex items-center justify-center py-8 text-[#2D3436]/30 text-[14px]">
+              <div className="flex items-center justify-center py-8 text-[#2D3436]/30 dark:text-[#e2e8f0]/30 text-[14px]">
                 Connect a server to view status
               </div>
             )}
@@ -126,7 +176,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Connection Info */}
-        {activeConn && status && (
+        {activeConn && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -134,24 +184,30 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 text-[14px]">
-                <div className="flex justify-between">
-                  <span className="text-[#2D3436]/50">Server</span>
-                  <span className="font-medium truncate ml-4">{activeConn.name}</span>
+              {status ? (
+                <div className="space-y-2 text-[14px]">
+                  <div className="flex justify-between">
+                    <span className="text-[#2D3436]/50 dark:text-[#e2e8f0]/50">Server</span>
+                    <span className="font-medium truncate ml-4">{activeConn.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#2D3436]/50 dark:text-[#e2e8f0]/50">Port</span>
+                    <span className="font-medium">{status.port}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#2D3436]/50 dark:text-[#e2e8f0]/50">Path</span>
+                    <span className="font-medium">{status.path}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#2D3436]/50 dark:text-[#e2e8f0]/50">This Chat Connections</span>
+                    <span className="font-medium">{status.currentChatConnectionCount}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-[#2D3436]/50">Port</span>
-                  <span className="font-medium">{status.port}</span>
+              ) : (
+                <div className="space-y-3">
+                  <SkeletonLine /><SkeletonLine /><SkeletonLine /><SkeletonLine />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-[#2D3436]/50">Path</span>
-                  <span className="font-medium">{status.path}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#2D3436]/50">This Chat Connections</span>
-                  <span className="font-medium">{status.currentChatConnectionCount}</span>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -162,9 +218,30 @@ export default function Dashboard() {
 
 function StatusItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="bg-[#F8FAFB] p-3 rounded-[16px] border border-[#EDF2F0]">
-      <div className="flex items-center gap-2 mb-1">{icon}<span className="text-[12px] text-[#2D3436]/50">{label}</span></div>
+    <div className="bg-[#F8FAFB] dark:bg-[#1a1b2e] p-3 rounded-[16px] border border-[#EDF2F0] dark:border-[#2d3748]">
+      <div className="flex items-center gap-2 mb-1">{icon}<span className="text-[12px] text-[#2D3436]/50 dark:text-[#e2e8f0]/50">{label}</span></div>
       <div className="text-[16px] font-bold">{value}</div>
+    </div>
+  );
+}
+
+function SkeletonItem() {
+  return (
+    <div className="bg-[#F8FAFB] dark:bg-[#1a1b2e] p-3 rounded-[16px] border border-[#EDF2F0] dark:border-[#2d3748] animate-pulse">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-4 h-4 rounded-full bg-[#EDF2F0] dark:bg-[#2d3748]" />
+        <div className="h-3 w-12 rounded bg-[#EDF2F0] dark:bg-[#2d3748]" />
+      </div>
+      <div className="h-5 w-16 rounded bg-[#EDF2F0] dark:bg-[#2d3748]" />
+    </div>
+  );
+}
+
+function SkeletonLine() {
+  return (
+    <div className="flex justify-between animate-pulse">
+      <div className="h-4 w-24 rounded bg-[#EDF2F0] dark:bg-[#2d3748]" />
+      <div className="h-4 w-16 rounded bg-[#EDF2F0] dark:bg-[#2d3748]" />
     </div>
   );
 }

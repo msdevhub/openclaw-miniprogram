@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { getUserName } from '../App';
 import { getConnections, removeConnection, updateConnection, getActiveConnectionId, setActiveConnectionId, type ServerConnection } from '../services/connectionStore';
+import * as channel from '../services/clawChannel';
 
 export default function Profile({ onNavigate }: { onNavigate: (screen: string) => void }) {
   const userName = getUserName();
@@ -26,11 +27,21 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
 
   const handleRemove = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (id === activeId) {
+      channel.close();
+      localStorage.removeItem('openclaw.agentList');
+      localStorage.removeItem('openclaw.channelStatus');
+    }
     removeConnection(id);
     refresh();
   };
 
   const handleActivate = (id: string) => {
+    if (id === activeId) return;
+    // Disconnect previous connection and clear caches
+    channel.close();
+    localStorage.removeItem('openclaw.agentList');
+    localStorage.removeItem('openclaw.channelStatus');
     setActiveConnectionId(id);
     setActiveId(id);
   };
@@ -65,7 +76,7 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
         </div>
         <div>
           <h2 className="text-xl font-bold">{userName}</h2>
-          <p className="text-[#2D3436]/50 text-sm">OpenClaw User</p>
+          <p className="text-[#2D3436]/50 dark:text-[#e2e8f0]/50 text-sm">OpenClaw User</p>
         </div>
       </div>
 
@@ -73,7 +84,7 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
         {/* Server Management */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[#2D3436]/50 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[#2D3436]/50 dark:text-[#e2e8f0]/50 uppercase tracking-wider flex items-center gap-2">
               <Server size={14} /> Servers
             </h3>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onNavigate('pairing')}>
@@ -82,35 +93,35 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
           </div>
 
           {connections.length > 0 ? (
-            <Card className="overflow-hidden divide-y divide-[#EDF2F0]">
+              <Card className="overflow-hidden divide-y divide-[#EDF2F0] dark:divide-[#2d3748]">
               {connections.map((conn) => (
                 <div
                   key={conn.id}
                   onClick={() => handleActivate(conn.id)}
-                  className="flex items-center gap-3 p-4 cursor-pointer hover:bg-[#F8FAFB]/50 transition-colors"
+                  className="flex items-center gap-3 p-4 cursor-pointer hover:bg-[#F8FAFB]/50 dark:hover:bg-[#1a1b2e]/50 transition-colors"
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                     activeId === conn.id 
                       ? 'bg-[#67B88B] text-white' 
-                      : 'bg-[#F8FAFB] text-[#2D3436]/40'
+                      : 'bg-[#F8FAFB] dark:bg-[#1a1b2e] text-[#2D3436]/40 dark:text-[#e2e8f0]/40'
                   }`}>
                     {activeId === conn.id ? <Check size={18} /> : <Server size={18} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-[15px] truncate">{conn.name}</p>
-                    <p className="text-[12px] text-[#2D3436]/40 truncate">{conn.serverUrl}</p>
+                    <p className="text-[12px] text-[#2D3436]/40 dark:text-[#e2e8f0]/40 truncate">{conn.serverUrl}</p>
                   </div>
                   <motion.button
                     whileTap={{ scale: 0.8 }}
                     onClick={(e) => openEdit(e, conn)}
-                    className="p-2 text-[#2D3436]/20 hover:text-[#5B8DEF] transition-colors flex-shrink-0"
+                    className="p-2 text-[#2D3436]/20 dark:text-[#e2e8f0]/20 hover:text-[#5B8DEF] transition-colors flex-shrink-0"
                   >
                     <Pencil size={14} />
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.8 }}
                     onClick={(e) => handleRemove(e, conn.id)}
-                    className="p-2 text-[#2D3436]/20 hover:text-red-400 transition-colors flex-shrink-0"
+                    className="p-2 text-[#2D3436]/20 dark:text-[#e2e8f0]/20 hover:text-red-400 transition-colors flex-shrink-0"
                   >
                     <Trash2 size={14} />
                   </motion.button>
@@ -119,8 +130,8 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
             </Card>
           ) : (
             <Card className="p-6 flex flex-col items-center text-center">
-              <Server size={24} className="text-[#2D3436]/20 mb-2" />
-              <p className="text-[#2D3436]/40 text-[14px] mb-3">No servers connected</p>
+              <Server size={24} className="text-[#2D3436]/20 dark:text-[#e2e8f0]/20 mb-2" />
+              <p className="text-[#2D3436]/40 dark:text-[#e2e8f0]/40 text-[14px] mb-3">No servers connected</p>
               <Button size="sm" onClick={() => onNavigate('pairing')}>
                 <Plus size={16} /> Add Server
               </Button>
@@ -136,7 +147,7 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
             document.documentElement.classList.toggle('dark', next);
             localStorage.setItem('openclaw.darkMode', next ? '1' : '0');
           }} />
-          <div className="h-[1px] bg-[#EDF2F0] ml-14" />
+          <div className="h-[1px] bg-[#EDF2F0] dark:bg-[#2d3748] ml-14" />
           <SettingItem icon={Bell} label="Push Notifications" hasToggle active={pushNotif} onClick={async () => {
             if (!pushNotif) {
               // Request permission
@@ -149,7 +160,7 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
             setPushNotif(next);
             localStorage.setItem('openclaw.pushNotif', next ? '1' : '0');
           }} />
-          <div className="h-[1px] bg-[#EDF2F0] ml-14" />
+          <div className="h-[1px] bg-[#EDF2F0] dark:bg-[#2d3748] ml-14" />
           <SettingItem icon={Smartphone} label="In-App Notifications" hasToggle active={inAppNotif} onClick={() => {
             const next = !inAppNotif;
             setInAppNotif(next);
@@ -183,36 +194,36 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
               exit={{ y: 300 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md bg-white rounded-t-[32px] p-6 pb-8 space-y-4 shadow-2xl mb-[90px] max-h-[75vh] overflow-y-auto"
+              className="w-full max-w-md bg-white dark:bg-[#232437] rounded-t-[32px] p-6 pb-8 space-y-4 shadow-2xl mb-[90px] max-h-[75vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-lg font-bold">Edit Server</h3>
-                <motion.button whileTap={{ scale: 0.8 }} onClick={() => setEditing(null)} className="p-1 text-[#2D3436]/30">
+                <motion.button whileTap={{ scale: 0.8 }} onClick={() => setEditing(null)} className="p-1 text-[#2D3436]/30 dark:text-[#e2e8f0]/30">
                   <X size={20} />
                 </motion.button>
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1">Connection Name</label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1">Connection Name</label>
                 <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1">Display Name</label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1">Display Name</label>
                 <Input value={editForm.displayName} onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1">WS URL</label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1">WS URL</label>
                 <Input value={editForm.serverUrl} onChange={(e) => setEditForm({ ...editForm, serverUrl: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1">Auth Token <span className="text-[#2D3436]/30 font-normal">(optional)</span></label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1">Auth Token <span className="text-[#2D3436]/30 dark:text-[#e2e8f0]/30 font-normal">(optional)</span></label>
                 <Input value={editForm.token} onChange={(e) => setEditForm({ ...editForm, token: e.target.value })} placeholder="gc_user_xxxxxxxxx" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1">Chat ID <span className="text-[#2D3436]/30 font-normal">(token auth)</span></label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1">Chat ID <span className="text-[#2D3436]/30 dark:text-[#e2e8f0]/30 font-normal">(token auth)</span></label>
                 <Input value={editForm.chatId} onChange={(e) => setEditForm({ ...editForm, chatId: e.target.value })} placeholder="gc-test-main" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#2D3436]/70 mb-1">Sender ID <span className="text-[#2D3436]/30 font-normal">(token auth)</span></label>
+                <label className="block text-[13px] font-medium text-[#2D3436]/70 dark:text-[#e2e8f0]/70 mb-1">Sender ID <span className="text-[#2D3436]/30 dark:text-[#e2e8f0]/30 font-normal">(token auth)</span></label>
                 <Input value={editForm.senderId} onChange={(e) => setEditForm({ ...editForm, senderId: e.target.value })} placeholder="gc-test-main" />
               </div>
               <Button className="w-full" onClick={saveEdit}>Save Changes</Button>
@@ -232,19 +243,19 @@ function SettingItem({ icon: Icon, label, value, hasToggle, active, onClick }: a
       className="flex items-center justify-between p-4 cursor-pointer"
     >
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-full bg-[#F8FAFB] flex items-center justify-center text-[#2D3436]">
+        <div className="w-10 h-10 rounded-full bg-[#F8FAFB] dark:bg-[#1a1b2e] flex items-center justify-center text-[#2D3436] dark:text-[#e2e8f0]">
           <Icon size={20} />
         </div>
         <span className="font-medium text-[16px]">{label}</span>
       </div>
       <div className="flex items-center gap-3">
-        {value && <span className="text-sm text-[#2D3436]/40">{value}</span>}
+        {value && <span className="text-sm text-[#2D3436]/40 dark:text-[#e2e8f0]/40">{value}</span>}
         {hasToggle ? (
-          <div className={`w-12 h-7 rounded-full p-1 transition-colors ${active ? 'bg-[#67B88B]' : 'bg-[#EDF2F0]'}`}>
+          <div className={`w-12 h-7 rounded-full p-1 transition-colors ${active ? 'bg-[#67B88B]' : 'bg-[#EDF2F0] dark:bg-[#2d3748]'}`}>
             <div className={`w-5 h-5 rounded-full bg-white shadow-sm transform transition-transform ${active ? 'translate-x-5' : 'translate-x-0'}`} />
           </div>
         ) : (
-          <ChevronRight size={20} className="text-[#2D3436]/30" />
+          <ChevronRight size={20} className="text-[#2D3436]/30 dark:text-[#e2e8f0]/30" />
         )}
       </div>
     </motion.div>

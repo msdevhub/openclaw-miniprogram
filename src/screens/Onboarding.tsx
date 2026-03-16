@@ -94,7 +94,7 @@ export default function Onboarding({ onGetStarted }: { onGetStarted: () => void 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.15 }}
-          className="text-center text-[#2D3436]/50 text-[15px]"
+          className="text-center text-[#2D3436]/50 dark:text-[#e2e8f0]/50 text-[15px]"
         >
           Intelligent development companion
         </motion.p>
@@ -123,7 +123,7 @@ export default function Onboarding({ onGetStarted }: { onGetStarted: () => void 
               <Icon size={36} className="text-white" />
             </div>
             <h2 className="text-xl font-bold text-center mb-3">{slide.title}</h2>
-            <p className="text-center text-[#2D3436]/55 text-[15px] leading-relaxed max-w-[300px]">
+            <p className="text-center text-[#2D3436]/55 dark:text-[#e2e8f0]/55 text-[15px] leading-relaxed max-w-[300px]">
               {slide.desc}
             </p>
           </motion.div>
@@ -136,7 +136,7 @@ export default function Onboarding({ onGetStarted }: { onGetStarted: () => void 
               key={i}
               onClick={() => goTo(i)}
               className={`rounded-full transition-all duration-300 ${
-                i === activeSlide ? 'w-6 h-2 bg-[#67B88B]' : 'w-2 h-2 bg-[#2D3436]/15'
+                i === activeSlide ? 'w-6 h-2 bg-[#67B88B]' : 'w-2 h-2 bg-[#2D3436]/15 dark:bg-[#e2e8f0]/15'
               }`}
             />
           ))}

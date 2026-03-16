@@ -555,8 +555,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
               )}
               
               <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[75%]`}>
-                <div className={`flex items-center gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div
+                <div
                     className={`px-5 py-3.5 rounded-[24px] text-[15px] leading-relaxed relative ${
                       isUser
                         ? 'bg-[#67B88B] text-white rounded-tr-[8px] shadow-md shadow-[#67B88B]/20'
@@ -611,26 +610,26 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                           h2: ({ children }) => <h2 className="text-base font-bold mb-1.5">{children}</h2>,
                           h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{children}</h3>,
                           a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#5B8DEF] underline">{children}</a>,
-                          blockquote: ({ children }) => <blockquote className="border-l-2 border-[#67B88B] pl-3 my-2 text-[#2D3436]/70">{children}</blockquote>,
+                          blockquote: ({ children }) => <blockquote className="border-l-2 border-[#67B88B] pl-3 my-2 text-[#2D3436]/70 dark:text-[#e2e8f0]/70">{children}</blockquote>,
                           strong: ({ children }) => <strong className="font-bold">{children}</strong>,
                         }}
                       >{msg.text}</Markdown>
                     )}
                   </div>
                   
-                  {/* Reaction & Reply & Edit/Delete Buttons */}
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
+                  {/* Reaction & Reply & Edit/Delete Buttons — below bubble */}
+                  <div className={`flex items-center gap-1 mt-1 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={() => openReactionPicker(msg.id)}
-                      className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-[#67B88B] bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
+                      className="p-1 text-gray-400 dark:text-gray-500 hover:text-[#67B88B] transition-colors"
                     >
                       <SmilePlus size={14} />
                     </motion.button>
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={() => startReply(msg)}
-                      className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-[#5B8DEF] bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
+                      className="p-1 text-gray-400 dark:text-gray-500 hover:text-[#5B8DEF] transition-colors"
                     >
                       <CornerDownLeft size={14} />
                     </motion.button>
@@ -639,21 +638,20 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                         <motion.button
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleEditMessage(msg)}
-                          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-amber-500 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
+                          className="p-1 text-gray-400 dark:text-gray-500 hover:text-amber-500 transition-colors"
                         >
                           <Pencil size={14} />
                         </motion.button>
                         <motion.button
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleDeleteMessage(msg.id)}
-                          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-red-500 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
+                          className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors"
                         >
                           <Trash2 size={14} />
                         </motion.button>
                       </>
                     )}
                   </div>
-                </div>
 
                 {/* Action Card for AI messages */}
                 {!isUser && <ActionCard text={msg.text} onSend={quickSend} />}

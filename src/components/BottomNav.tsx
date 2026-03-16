@@ -30,7 +30,7 @@ export default function BottomNav({ currentScreen, onNavigate }: BottomNavProps)
               onClick={() => onNavigate(item.id as Screen)}
               className={cn(
                 "p-3 rounded-2xl flex flex-col items-center justify-center transition-colors relative",
-                isActive ? 'text-[#67B88B]' : 'text-[#2D3436]/40 hover:text-[#2D3436]/70'
+                isActive ? 'text-[#67B88B]' : 'text-[#2D3436]/40 dark:text-[#e2e8f0]/40 hover:text-[#2D3436]/70 dark:hover:text-[#e2e8f0]/70'
               )}
             >
               <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />

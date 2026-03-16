@@ -8,10 +8,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-[#67B88B] text-white shadow-lg shadow-[#67B88B]/25 hover:bg-[#5aa77d]",
-        outline: "border border-[#EDF2F0] bg-white text-[#2D3436] shadow-sm hover:bg-[#F8FAFB]",
-        ghost: "text-[#2D3436]/60 hover:text-[#2D3436] hover:bg-[#EDF2F0]/50",
-        destructive: "bg-red-50 text-red-500 hover:bg-red-100",
-        icon: "text-[#2D3436]/40 hover:text-[#2D3436]",
+        outline: "border border-[#EDF2F0] dark:border-[#2d3748] bg-white dark:bg-[#232437] text-[#2D3436] dark:text-[#e2e8f0] shadow-sm hover:bg-[#F8FAFB] dark:hover:bg-[#2d3748]",
+        ghost: "text-[#2D3436]/60 dark:text-[#e2e8f0]/60 hover:text-[#2D3436] dark:hover:text-[#e2e8f0] hover:bg-[#EDF2F0]/50 dark:hover:bg-[#2d3748]/50",
+        destructive: "bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50",
+        icon: "text-[#2D3436]/40 dark:text-[#e2e8f0]/40 hover:text-[#2D3436] dark:hover:text-[#e2e8f0]",
       },
       size: {
         default: "h-12 px-6 py-3 text-[15px] rounded-[24px]",
