@@ -175,7 +175,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
     setIsThinking(false);
 
     channel.connect({
-      chatId: conversationId,
+      chatId: activeConn.chatId,
       senderId: activeConn.senderId || getUserId(),
       senderName: activeConn.displayName,
       serverUrl: activeConn.serverUrl,

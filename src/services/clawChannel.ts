@@ -42,14 +42,13 @@ function createStableId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function buildSocketUrl(serverUrl: string, chatId: string, agentId?: string, token?: string) {
+function buildSocketUrl(serverUrl: string, chatId?: string, agentId?: string, token?: string) {
   const base = serverUrl || DEFAULT_WS_URL;
-  const normalized = base.replace(/[?&]+$/, '');
-  const sep = normalized.includes('?') ? '&' : '?';
-  let url = `${normalized}${sep}chatId=${encodeURIComponent(chatId)}`;
-  if (agentId) url += `&agentId=${encodeURIComponent(agentId)}`;
-  if (token) url += `&token=${encodeURIComponent(token)}`;
-  return url;
+  const parsed = new URL(base);
+  if (chatId) parsed.searchParams.set('chatId', chatId);
+  if (agentId) parsed.searchParams.set('agentId', agentId);
+  if (token) parsed.searchParams.set('token', token);
+  return parsed.toString();
 }
 
 let ws: WebSocket | null = null;
@@ -99,7 +98,7 @@ function scheduleReconnect() {
 }
 
 export type ConnectOptions = {
-  chatId: string;
+  chatId?: string;
   senderId: string;
   senderName: string;
   serverUrl?: string;
@@ -110,12 +109,13 @@ export type ConnectOptions = {
 export function connect(opts: ConnectOptions) {
   const nextServerUrl = opts.serverUrl || DEFAULT_WS_URL;
   const nextAgentId = opts.agentId || '';
+  const nextChatId = opts.chatId || '';
 
   // If already connecting/connected to the exact same target, skip
   if (
     ws &&
     (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) &&
-    currentChatId === opts.chatId &&
+    currentChatId === nextChatId &&
     currentServerUrl === nextServerUrl &&
     currentAgentId === nextAgentId
   ) {
@@ -125,7 +125,7 @@ export function connect(opts: ConnectOptions) {
   close(false);
 
   currentServerUrl = nextServerUrl;
-  currentChatId = opts.chatId;
+  currentChatId = nextChatId;
   currentSenderId = opts.senderId;
   currentSenderName = opts.senderName;
   currentAgentId = nextAgentId;
@@ -135,6 +135,7 @@ export function connect(opts: ConnectOptions) {
   const token = ++connectionToken;
   updateStatus(reconnectAttempts > 0 ? 'reconnecting' : 'connecting');
 
+  // When token auth is used and no explicit chatId, don't send chatId in URL — server assigns from token
   const socket = new WebSocket(buildSocketUrl(currentServerUrl, opts.chatId, opts.agentId, opts.token));
   ws = socket;
 
@@ -142,12 +143,18 @@ export function connect(opts: ConnectOptions) {
     if (connectionToken !== token || ws !== socket) return;
     reconnectAttempts = 0;
     updateStatus('connected');
+    // Request agent list immediately on open (like h5-client)
+    try { requestAgentList(); } catch { /* ignore */ }
   });
 
   socket.addEventListener('message', (event) => {
     if (connectionToken !== token || ws !== socket) return;
     try {
       const packet: InboundPacket = JSON.parse(event.data as string);
+      // Update chatId from server response (server may assign/override based on token)
+      if (packet.type === 'connection.open' && packet.data?.chatId) {
+        currentChatId = packet.data.chatId as string;
+      }
       messageListeners.forEach((fn) => fn(packet));
     } catch {
       // ignore malformed messages

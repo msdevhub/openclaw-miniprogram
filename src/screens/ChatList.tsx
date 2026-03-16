@@ -32,9 +32,8 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
     if (!conn) { setLoading(false); return; }
 
     setRefreshing(true);
-    const chatId = conn.chatId || `openclaw-web-lobby-${conn.id}`;
     channel.connect({
-      chatId,
+      chatId: conn.chatId,
       senderId: conn.senderId || getUserId(),
       senderName: conn.displayName,
       serverUrl: conn.serverUrl,

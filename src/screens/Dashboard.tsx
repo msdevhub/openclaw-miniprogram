@@ -43,9 +43,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (!activeConn) return;
 
-    const chatId = activeConn.chatId || `openclaw-web-dashboard-${activeConn.id}`;
     channel.connect({
-      chatId,
+      chatId: activeConn.chatId,
       senderId: activeConn.senderId || getUserId(),
       senderName: activeConn.displayName,
       serverUrl: activeConn.serverUrl,
