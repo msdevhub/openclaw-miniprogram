@@ -77,7 +77,6 @@ function AppShell() {
 
   const [currentScreen, setCurrentScreen] = useState<Screen>(initialScreen);
   const [activeAgentId, setActiveAgentId] = useState<string | null>(initialFromUrl.chatId ?? null);
-  const navigationHistoryRef = useRef<Screen[]>([initialScreen]);
 
   // PWA update detection
   const { updateAvailable, applyUpdate, dismissUpdate } = usePWAUpdate();
@@ -95,9 +94,6 @@ function AppShell() {
   const navigate = useCallback((screen: Screen, chatId?: string) => {
     setCurrentScreen(screen);
     if (chatId) setActiveAgentId(chatId);
-
-    // Track navigation history for swipe gestures
-    navigationHistoryRef.current.push(screen);
 
     // Screen → URL
     if (screen === 'chat_room' && chatId) {
@@ -151,6 +147,9 @@ function AppShell() {
   // Calculate animation values based on swipe state
   const animateX = swipeState.isDragging ? swipeState.dragX : 0;
   const animateOpacity = swipeState.isDragging ? 1 - swipeState.dragProgress * 0.3 : 1;
+  const animateTransition = swipeState.isDragging
+    ? { type: 'tween' as const, duration: 0 }
+    : { type: 'spring' as const, stiffness: 300, damping: 30 };
 
   return (
     <div className="relative w-full h-[100dvh] bg-[#F8FAFB] dark:bg-[#1a1b2e] text-[#2D3436] dark:text-[#e2e8f0] overflow-hidden flex justify-center font-sans">
@@ -172,12 +171,9 @@ function AppShell() {
             animate={{
               opacity: animateOpacity,
               x: animateX,
-              transition: swipeState.isDragging
-                ? { type: 'tween', duration: 0 }
-                : { type: 'spring', stiffness: 300, damping: 30 }
             }}
             exit={{ opacity: 0, x: -40 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            transition={animateTransition}
             className="absolute inset-0 overflow-y-auto"
           >
             {renderScreen()}

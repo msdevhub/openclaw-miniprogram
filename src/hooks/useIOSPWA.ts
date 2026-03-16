@@ -10,11 +10,12 @@ export function useIOSPWA() {
     // Update theme color based on dark mode
     const updateThemeColor = () => {
       const isDark = document.documentElement.classList.contains('dark');
-      const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+      // Update all theme-color meta tags to handle both media query and non-media versions
+      const themeColorMetas = document.querySelectorAll('meta[name="theme-color"]');
 
-      if (themeColorMeta) {
-        themeColorMeta.setAttribute('content', isDark ? '#1a1b2e' : '#67B88B');
-      }
+      themeColorMetas.forEach((meta) => {
+        meta.setAttribute('content', isDark ? '#1a1b2e' : '#67B88B');
+      });
     };
 
     // Initial theme color update
