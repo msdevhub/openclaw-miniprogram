@@ -147,6 +147,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [peerTyping, setPeerTyping] = useState(false);
   const [editingMsg, setEditingMsg] = useState<Message | null>(null);
+  const [showMoreIcons, setShowMoreIcons] = useState(false);
   const fileInputRef2 = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -503,7 +504,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#F8FAFB]">
+    <div className="flex flex-col h-full bg-[#F8FAFB] relative">
       {/* Header */}
       <div className="px-4 py-4 sticky top-0 bg-white/70 backdrop-blur-[20px] border-b border-[#EDF2F0] z-20 flex items-center justify-between">
         <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="p-2 -ml-2 text-[#2D3436]">
@@ -526,7 +527,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-32 flex flex-col gap-4">
         {messages.map((msg, i) => {
           const isUser = msg.sender === 'user';
           const prevMsg = i > 0 ? messages[i - 1] : null;
@@ -720,7 +721,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-gradient-to-t from-[#F8FAFB] via-[#F8FAFB] to-transparent relative z-30">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#F8FAFB] via-[#F8FAFB] to-transparent z-30">
         <AnimatePresence>
           {showSlashMenu && (
             <>
@@ -842,13 +843,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
         </AnimatePresence>
 
         <div className="bg-white border border-[#EDF2F0] rounded-full p-2 flex items-center gap-2 shadow-lg shadow-black/5">
-          <motion.button 
-            whileTap={{ scale: 0.9 }} 
-            onClick={() => { setShowEmojiPicker(!showEmojiPicker); setShowSlashMenu(false); setReactingToMsgId(null); }}
-            className={`p-2 transition-colors ${showEmojiPicker && !reactingToMsgId ? 'text-[#67B88B]' : 'text-[#2D3436]/40 hover:text-[#2D3436]'}`}
-          >
-            <Smile size={24} />
-          </motion.button>
+          {/* Image button - always visible */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handleImagePick}
@@ -856,13 +851,44 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
           >
             <Image size={22} />
           </motion.button>
+
+          {/* More button - toggle additional icons */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={handleFilePick}
-            className="p-2 text-[#2D3436]/40 hover:text-[#2D3436] transition-colors"
+            onClick={() => setShowMoreIcons(!showMoreIcons)}
+            className={`p-2 transition-colors ${showMoreIcons ? 'text-[#67B88B]' : 'text-[#2D3436]/40 hover:text-[#2D3436]'}`}
           >
-            <Paperclip size={20} />
+            <MoreHorizontal size={22} />
           </motion.button>
+
+          {/* Additional icons - shown when more is clicked */}
+          <AnimatePresence>
+            {showMoreIcons && (
+              <>
+                <motion.button
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 'auto', opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => { setShowEmojiPicker(!showEmojiPicker); setShowSlashMenu(false); setReactingToMsgId(null); }}
+                  className={`p-2 transition-colors ${showEmojiPicker && !reactingToMsgId ? 'text-[#67B88B]' : 'text-[#2D3436]/40 hover:text-[#2D3436]'}`}
+                >
+                  <Smile size={22} />
+                </motion.button>
+                <motion.button
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 'auto', opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleFilePick}
+                  className="p-2 text-[#2D3436]/40 hover:text-[#2D3436] transition-colors"
+                >
+                  <Paperclip size={20} />
+                </motion.button>
+              </>
+            )}
+          </AnimatePresence>
+
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelected} />
           <input ref={fileInputRef2} type="file" className="hidden" onChange={handleFileSelected2} />
           <input
@@ -873,15 +899,9 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
             placeholder="Message OpenClaw..."
             className="flex-1 bg-transparent border-none focus:outline-none text-[15px] py-2"
           />
-          {inputValue.trim() ? (
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={handleSend}
-              className="p-3 rounded-full flex items-center justify-center bg-[#67B88B] text-white shadow-md shadow-[#67B88B]/30"
-            >
-              <Send size={20} className="ml-0.5" />
-            </motion.button>
-          ) : (
+
+          {/* Voice button - always visible when no text */}
+          {!inputValue.trim() && (
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={toggleRecording}
