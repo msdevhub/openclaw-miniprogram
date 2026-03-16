@@ -504,14 +504,14 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#F8FAFB] relative">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 relative">
       {/* Header */}
-      <div className="px-4 py-4 sticky top-0 bg-white/70 backdrop-blur-[20px] border-b border-[#EDF2F0] z-20 flex items-center justify-between">
-        <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="p-2 -ml-2 text-[#2D3436]">
+      <div className="px-4 py-4 sticky top-0 bg-white/70 dark:bg-gray-800/70 backdrop-blur-[20px] border-b border-gray-200 dark:border-gray-700 z-20 flex items-center justify-between">
+        <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="p-2 -ml-2 text-gray-800 dark:text-gray-200">
           <ChevronLeft size={28} />
         </motion.button>
         <div className="flex flex-col items-center">
-          <h2 className="font-semibold text-[17px]">{agentInfo ? `${agentInfo.identityEmoji || '🤖'} ${agentInfo.name}` : agentId || 'OpenClaw Bot'}</h2>
+          <h2 className="font-semibold text-[17px] text-gray-800 dark:text-gray-100">{agentInfo ? `${agentInfo.identityEmoji || '🤖'} ${agentInfo.name}` : agentId || 'OpenClaw Bot'}</h2>
           <span className={`text-[11px] font-medium flex items-center gap-1 ${
             wsStatus === 'connected' ? 'text-[#67B88B]' : wsStatus === 'connecting' || wsStatus === 'reconnecting' ? 'text-amber-500' : 'text-red-400'
           }`}>
@@ -521,7 +521,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
             {wsStatus === 'disconnected' && <><WifiOff size={10} /> Disconnected</>}
           </span>
         </div>
-        <motion.button whileTap={{ scale: 0.9 }} className="p-2 -mr-2 text-[#2D3436]">
+        <motion.button whileTap={{ scale: 0.9 }} className="p-2 -mr-2 text-gray-800 dark:text-gray-200">
           <MoreHorizontal size={24} />
         </motion.button>
       </div>
@@ -537,9 +537,9 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
               {/* Date separator */}
               {showDateSep && msg.timestamp && (
                 <div className="flex items-center gap-3 my-3">
-                  <div className="flex-1 h-px bg-[#EDF2F0]" />
-                  <span className="text-[11px] text-[#2D3436]/30 font-medium">{formatDate(msg.timestamp)}</span>
-                  <div className="flex-1 h-px bg-[#EDF2F0]" />
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                  <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">{formatDate(msg.timestamp)}</span>
+                  <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
                 </div>
               )}
               <motion.div
@@ -558,9 +558,9 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                 <div className={`flex items-center gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div
                     className={`px-5 py-3.5 rounded-[24px] text-[15px] leading-relaxed relative ${
-                      isUser 
-                        ? 'bg-[#67B88B] text-white rounded-tr-[8px] shadow-md shadow-[#67B88B]/20' 
-                        : 'bg-white text-[#2D3436] border border-[#EDF2F0] rounded-tl-[8px] shadow-sm'
+                      isUser
+                        ? 'bg-[#67B88B] text-white rounded-tr-[8px] shadow-md shadow-[#67B88B]/20'
+                        : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-tl-[8px] shadow-sm'
                     }`}
                   >
                     {/* Quote reference */}
@@ -568,7 +568,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                       const quoted = messages.find((m) => m.id === msg.replyTo);
                       return quoted ? (
                         <div className={`text-[12px] mb-2 px-3 py-1.5 rounded-lg border-l-2 ${
-                          isUser ? 'bg-white/15 border-white/40 text-white/80' : 'bg-[#F8FAFB] border-[#67B88B] text-[#2D3436]/60'
+                          isUser ? 'bg-white/15 border-white/40 text-white/80' : 'bg-gray-50 dark:bg-gray-900 border-[#67B88B] text-gray-600 dark:text-gray-400'
                         }`}>
                           <span className="font-medium">{quoted.sender === 'user' ? 'You' : 'Bot'}: </span>
                           {quoted.text.slice(0, 80)}{quoted.text.length > 80 ? '…' : ''}
@@ -602,7 +602,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                                 </pre>
                               );
                             }
-                            return <code className="bg-[#EDF2F0] text-[#2D3436] px-1.5 py-0.5 rounded text-[13px]">{children}</code>;
+                            return <code className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-1.5 py-0.5 rounded text-[13px]">{children}</code>;
                           },
                           pre: ({ children }) => <>{children}</>,
                           ul: ({ children }) => <ul className="list-disc pl-4 mb-2 space-y-1">{children}</ul>,
@@ -623,14 +623,14 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={() => openReactionPicker(msg.id)}
-                      className="p-1.5 text-[#2D3436]/40 hover:text-[#67B88B] bg-white rounded-full shadow-sm border border-[#EDF2F0]"
+                      className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-[#67B88B] bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
                     >
                       <SmilePlus size={14} />
                     </motion.button>
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={() => startReply(msg)}
-                      className="p-1.5 text-[#2D3436]/40 hover:text-[#5B8DEF] bg-white rounded-full shadow-sm border border-[#EDF2F0]"
+                      className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-[#5B8DEF] bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
                     >
                       <CornerDownLeft size={14} />
                     </motion.button>
@@ -639,14 +639,14 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                         <motion.button
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleEditMessage(msg)}
-                          className="p-1.5 text-[#2D3436]/40 hover:text-amber-500 bg-white rounded-full shadow-sm border border-[#EDF2F0]"
+                          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-amber-500 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
                         >
                           <Pencil size={14} />
                         </motion.button>
                         <motion.button
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleDeleteMessage(msg.id)}
-                          className="p-1.5 text-[#2D3436]/40 hover:text-red-500 bg-white rounded-full shadow-sm border border-[#EDF2F0]"
+                          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-red-500 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
                         >
                           <Trash2 size={14} />
                         </motion.button>
@@ -668,7 +668,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                         animate={{ scale: 1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => openReactionPicker(msg.id)}
-                        className="bg-white border border-[#EDF2F0] rounded-full px-2 py-0.5 text-[13px] shadow-sm flex items-center gap-1"
+                        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-2 py-0.5 text-[13px] shadow-sm flex items-center gap-1"
                       >
                         {emoji}
                       </motion.button>
@@ -678,7 +678,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
 
                 {/* Message time */}
                 {msg.timestamp && (
-                  <span className={`text-[10px] text-[#2D3436]/25 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
+                  <span className={`text-[10px] text-gray-400 dark:text-gray-500 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
                     {formatTime(msg.timestamp)}
                   </span>
                 )}
@@ -689,7 +689,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
         })}
         {/* Typing indicator */}
         {peerTyping && !isThinking && (
-          <div className="flex items-center gap-2 px-2 text-[12px] text-[#2D3436]/40">
+          <div className="flex items-center gap-2 px-2 text-[12px] text-gray-500 dark:text-gray-400">
             <span className="w-1.5 h-1.5 bg-[#67B88B] rounded-full animate-pulse" />
             {agentInfo?.name || 'Bot'} is typing…
           </div>
@@ -707,7 +707,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#67B88B] to-[#4a9a70] flex-shrink-0 mr-3 flex items-center justify-center text-white shadow-sm text-lg">
                 {agentInfo?.identityEmoji || '🤖'}
               </div>
-              <div className="bg-white border border-[#EDF2F0] rounded-[24px] rounded-tl-[8px] shadow-sm px-5 py-3.5">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[24px] rounded-tl-[8px] shadow-sm px-5 py-3.5">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 bg-[#67B88B] rounded-full animate-bounce [animation-delay:0ms]" />
                   <span className="w-2 h-2 bg-[#67B88B] rounded-full animate-bounce [animation-delay:150ms]" />
@@ -721,20 +721,20 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
       </div>
 
       {/* Input Area */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#F8FAFB] via-[#F8FAFB] to-transparent z-30">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-50 via-gray-50 dark:from-gray-900 dark:via-gray-900 to-transparent z-30">
         <AnimatePresence>
           {showSlashMenu && (
             <>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-[#F8FAFB]/40 backdrop-blur-md -z-10"
+                className="fixed inset-0 bg-gray-50/40 dark:bg-gray-900/40 backdrop-blur-md -z-10"
                 onClick={() => setShowSlashMenu(false)}
               />
               <motion.div
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute bottom-full left-4 right-4 mb-2 bg-white/70 backdrop-blur-[20px] border border-white/50 shadow-2xl rounded-[24px] p-2 overflow-hidden"
+                className="absolute bottom-full left-4 right-4 mb-2 bg-white/70 dark:bg-gray-800/70 backdrop-blur-[20px] border border-white/50 dark:border-gray-700/50 shadow-2xl rounded-[24px] p-2 overflow-hidden"
               >
                 {slashCommands
                   .filter((cmd) => cmd.label.startsWith(inputValue) || inputValue === '/')
@@ -745,12 +745,12 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                     onClick={() => handleCommandSelect(cmd.label)}
                     className="w-full flex items-center gap-3 p-3 rounded-[16px] text-left transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-full bg-[#EDF2F0] flex items-center justify-center text-[#67B88B]">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-[#67B88B]">
                       <cmd.icon size={18} />
                     </div>
                     <div>
-                      <div className="font-semibold text-[15px] text-[#2D3436]">{cmd.label}</div>
-                      <div className="text-[13px] text-[#2D3436]/50">{cmd.desc}</div>
+                      <div className="font-semibold text-[15px] text-gray-800 dark:text-gray-100">{cmd.label}</div>
+                      <div className="text-[13px] text-gray-600 dark:text-gray-400">{cmd.desc}</div>
                     </div>
                   </motion.button>
                 ))}
@@ -760,23 +760,23 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
 
           {showEmojiPicker && (
             <>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-[#F8FAFB]/40 backdrop-blur-md -z-10"
+                className="fixed inset-0 bg-gray-50/40 dark:bg-gray-900/40 backdrop-blur-md -z-10"
                 onClick={() => { setShowEmojiPicker(false); setReactingToMsgId(null); }}
               />
               <motion.div
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute bottom-full left-4 right-4 mb-2 bg-white/70 backdrop-blur-[20px] border border-white/50 shadow-2xl rounded-[24px] p-4 flex flex-wrap gap-2 justify-center"
+                className="absolute bottom-full left-4 right-4 mb-2 bg-white/70 dark:bg-gray-800/70 backdrop-blur-[20px] border border-white/50 dark:border-gray-700/50 shadow-2xl rounded-[24px] p-4 flex flex-wrap gap-2 justify-center"
               >
                 {EMOJI_LIST.map((emoji) => (
                   <motion.button
                     key={emoji}
                     whileTap={{ scale: 0.8 }}
                     onClick={() => handleEmojiSelect(emoji)}
-                    className="w-10 h-10 text-2xl flex items-center justify-center hover:bg-white/50 rounded-full transition-colors"
+                    className="w-10 h-10 text-2xl flex items-center justify-center hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-full transition-colors"
                   >
                     {emoji}
                   </motion.button>
@@ -794,7 +794,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                 key={cmd.label}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => quickSend(cmd.label)}
-                className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-[#EDF2F0] rounded-full text-[12px] font-medium text-[#2D3436]/60 hover:border-[#67B88B] hover:text-[#67B88B] transition-colors"
+                className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-[12px] font-medium text-gray-600 dark:text-gray-300 hover:border-[#67B88B] hover:text-[#67B88B] transition-colors"
               >
                 <span>{cmd.emoji}</span>
                 {cmd.label}
@@ -826,15 +826,15 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="flex items-center gap-2 px-4 py-2 mb-2 bg-white border border-[#EDF2F0] rounded-[16px]">
+              <div className="flex items-center gap-2 px-4 py-2 mb-2 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded-[16px]">
                 <div className="w-1 h-8 bg-[#5B8DEF] rounded-full flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] text-[#5B8DEF] font-medium">
                     Replying to {replyingTo.sender === 'user' ? 'yourself' : 'Bot'}
                   </p>
-                  <p className="text-[13px] text-[#2D3436]/60 truncate">{replyingTo.text}</p>
+                  <p className="text-[13px] text-gray-600 dark:text-gray-400 truncate">{replyingTo.text}</p>
                 </div>
-                <motion.button whileTap={{ scale: 0.8 }} onClick={() => setReplyingTo(null)} className="p-1 text-[#2D3436]/30">
+                <motion.button whileTap={{ scale: 0.8 }} onClick={() => setReplyingTo(null)} className="p-1 text-gray-400 dark:text-gray-500">
                   <X size={16} />
                 </motion.button>
               </div>
@@ -842,12 +842,12 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
           )}
         </AnimatePresence>
 
-        <div className="bg-white border border-[#EDF2F0] rounded-full p-2 flex items-center gap-2 shadow-lg shadow-black/5">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full p-2 flex items-center gap-2 shadow-lg shadow-black/5">
           {/* Image button - always visible */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handleImagePick}
-            className="p-2 text-[#2D3436]/40 hover:text-[#2D3436] transition-colors"
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
           >
             <Image size={22} />
           </motion.button>
@@ -856,7 +856,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowMoreIcons(!showMoreIcons)}
-            className={`p-2 transition-colors ${showMoreIcons ? 'text-[#67B88B]' : 'text-[#2D3436]/40 hover:text-[#2D3436]'}`}
+            className={`p-2 transition-colors ${showMoreIcons ? 'text-[#67B88B]' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}
           >
             <MoreHorizontal size={22} />
           </motion.button>
@@ -871,7 +871,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                   exit={{ width: 0, opacity: 0 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => { setShowEmojiPicker(!showEmojiPicker); setShowSlashMenu(false); setReactingToMsgId(null); }}
-                  className={`p-2 transition-colors ${showEmojiPicker && !reactingToMsgId ? 'text-[#67B88B]' : 'text-[#2D3436]/40 hover:text-[#2D3436]'}`}
+                  className={`p-2 transition-colors ${showEmojiPicker && !reactingToMsgId ? 'text-[#67B88B]' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}
                 >
                   <Smile size={22} />
                 </motion.button>
@@ -881,7 +881,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
                   exit={{ width: 0, opacity: 0 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleFilePick}
-                  className="p-2 text-[#2D3436]/40 hover:text-[#2D3436] transition-colors"
+                  className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                 >
                   <Paperclip size={20} />
                 </motion.button>
@@ -897,7 +897,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
             onChange={handleInputChange}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Message OpenClaw..."
-            className="flex-1 bg-transparent border-none focus:outline-none text-[15px] py-2"
+            className="flex-1 bg-transparent border-none focus:outline-none text-[15px] py-2 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
           />
 
           {/* Voice button - always visible when no text */}
@@ -906,7 +906,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
               whileTap={{ scale: 0.9 }}
               onClick={toggleRecording}
               className={`p-3 rounded-full flex items-center justify-center transition-colors ${
-                isRecording ? 'bg-red-500 text-white shadow-md shadow-red-500/30' : 'bg-[#EDF2F0] text-[#2D3436]/40'
+                isRecording ? 'bg-red-500 text-white shadow-md shadow-red-500/30' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
               }`}
             >
               {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
