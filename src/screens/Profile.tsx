@@ -13,6 +13,9 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editing, setEditing] = useState<ServerConnection | null>(null);
   const [editForm, setEditForm] = useState({ name: '', displayName: '', serverUrl: '', token: '', chatId: '', senderId: '' });
+  const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
+  const [pushNotif, setPushNotif] = useState(() => localStorage.getItem('openclaw.pushNotif') !== '0');
+  const [inAppNotif, setInAppNotif] = useState(() => localStorage.getItem('openclaw.inAppNotif') !== '0');
 
   const refresh = useCallback(() => {
     setConnections(getConnections());
@@ -127,14 +130,31 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
 
         {/* Settings */}
         <Card className="overflow-hidden">
-          <SettingItem icon={Moon} label="Dark Mode" hasToggle active={document.documentElement.classList.contains('dark')} onClick={() => {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('openclaw.darkMode', document.documentElement.classList.contains('dark') ? '1' : '0');
+          <SettingItem icon={Moon} label="Dark Mode" hasToggle active={darkMode} onClick={() => {
+            const next = !darkMode;
+            setDarkMode(next);
+            document.documentElement.classList.toggle('dark', next);
+            localStorage.setItem('openclaw.darkMode', next ? '1' : '0');
           }} />
           <div className="h-[1px] bg-[#EDF2F0] ml-14" />
-          <SettingItem icon={Bell} label="Push Notifications" hasToggle active={true} />
+          <SettingItem icon={Bell} label="Push Notifications" hasToggle active={pushNotif} onClick={async () => {
+            if (!pushNotif) {
+              // Request permission
+              if ('Notification' in window) {
+                const perm = await Notification.requestPermission();
+                if (perm !== 'granted') return;
+              }
+            }
+            const next = !pushNotif;
+            setPushNotif(next);
+            localStorage.setItem('openclaw.pushNotif', next ? '1' : '0');
+          }} />
           <div className="h-[1px] bg-[#EDF2F0] ml-14" />
-          <SettingItem icon={Smartphone} label="In-App Notifications" hasToggle active={true} />
+          <SettingItem icon={Smartphone} label="In-App Notifications" hasToggle active={inAppNotif} onClick={() => {
+            const next = !inAppNotif;
+            setInAppNotif(next);
+            localStorage.setItem('openclaw.inAppNotif', next ? '1' : '0');
+          }} />
         </Card>
 
         <Card className="overflow-hidden">

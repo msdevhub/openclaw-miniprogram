@@ -185,16 +185,25 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
     const unsubMsg = channel.onMessage((packet) => {
       if (packet.type === 'message.send' && packet.data?.content) {
         setIsThinking(false);
+        const content = packet.data.content as string;
         setMessages((prev) => [
           ...prev,
           {
             id: packet.data.messageId || Date.now().toString(),
             sender: 'ai',
-            text: packet.data.content as string,
+            text: content,
             replyTo: (packet.data.replyTo as string) || undefined,
             timestamp: (packet.data.timestamp as number) || Date.now(),
           },
         ]);
+
+        // Push notification (browser)
+        if (localStorage.getItem('openclaw.pushNotif') !== '0' && 'Notification' in window && Notification.permission === 'granted' && document.hidden) {
+          new Notification(agentInfo?.name || 'OpenClaw', {
+            body: content.slice(0, 100),
+            icon: '/icon-192.svg',
+          });
+        }
       } else if (packet.type === 'reaction.add' || packet.type === 'reaction.remove') {
         const { messageId, emoji } = packet.data as { messageId: string; emoji: string };
         setMessages((prev) => prev.map((m) => {
