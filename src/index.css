@@ -110,8 +110,7 @@ body {
 
 /* Safe area handling for mobile PWA */
 .mobile-app-container {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: max(12px, env(safe-area-inset-top));
 }
 
 /* Prevent iOS input zoom */
