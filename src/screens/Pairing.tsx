@@ -168,7 +168,7 @@ export default function Pairing({ onBack, onPaired }: { onBack: () => void; onPa
         <div className="w-10" />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-4 pb-32 space-y-6">
+      <div className="flex-1 overflow-y-auto px-6 py-4 pb-32 space-y-6 max-w-xl mx-auto w-full">
         {/* Hero */}
         <div className="flex flex-col items-center text-center pt-2 pb-1">
           <motion.div

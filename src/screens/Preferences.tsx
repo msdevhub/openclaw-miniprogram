@@ -17,7 +17,7 @@ export default function Preferences({ onBack }: { onBack: () => void }) {
         <div className="w-10" />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-4 pb-32 space-y-8">
+      <div className="flex-1 overflow-y-auto px-6 py-4 pb-32 space-y-8 max-w-xl mx-auto w-full">
         
         <section>
           <h3 className="text-sm font-semibold text-[#2D3436]/50 dark:text-[#e2e8f0]/50 mb-4 uppercase tracking-wider flex items-center gap-2">

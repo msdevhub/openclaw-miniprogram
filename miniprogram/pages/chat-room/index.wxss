@@ -163,3 +163,99 @@
 .chat-send--recording {
   background: #E15B64 !important;
 }
+
+/* Typing indicator */
+.typing-indicator-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12rpx;
+  padding: 8rpx 16rpx 16rpx;
+}
+
+.typing-indicator-bubble {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 14rpx 24rpx;
+  background: var(--color-card);
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-16);
+}
+
+.typing-indicator-text {
+  font-size: 22rpx;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Edit bar */
+.edit-bar {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 12rpx 20rpx;
+  margin: 0 16rpx 8rpx;
+  background: var(--color-card);
+  border: 2rpx solid var(--color-primary);
+  border-radius: var(--radius-16);
+}
+
+.edit-bar__indicator {
+  width: 6rpx;
+  height: 48rpx;
+  background: var(--color-primary);
+  border-radius: 4rpx;
+  flex-shrink: 0;
+}
+
+.edit-bar__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.edit-bar__label {
+  display: block;
+  font-size: 20rpx;
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.edit-bar__text {
+  display: block;
+  font-size: 24rpx;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.edit-bar__close {
+  font-size: 24rpx;
+  color: var(--color-text-muted);
+  padding: 8rpx;
+  flex-shrink: 0;
+}
+
+/* Message action buttons row */
+.message-actions-row {
+  display: flex;
+  gap: 4rpx;
+  margin-top: 4rpx;
+}
+
+.message-actions-row--user {
+  justify-content: flex-end;
+}
+
+.message-actions-row--ai {
+  justify-content: flex-start;
+}
+
+.message-action__icon {
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+.message-action--danger .message-action__icon {
+  font-size: 22rpx;
+}

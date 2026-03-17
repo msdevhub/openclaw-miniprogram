@@ -132,7 +132,7 @@ function getAgentInfo(agentId: string | null | undefined) {
   } catch { return null; }
 }
 
-export default function ChatRoom({ agentId, onBack }: { agentId?: string | null; onBack: () => void }) {
+export default function ChatRoom({ agentId, onBack, isDesktop }: { agentId?: string | null; onBack: () => void; isDesktop?: boolean }) {
   const activeConn = getActiveConnection();
   const connId = activeConn?.id || '';
   const agentInfo = getAgentInfo(agentId);
@@ -507,10 +507,12 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 relative">
       {/* Header */}
       <div className="px-4 py-4 sticky top-0 bg-white/70 dark:bg-gray-800/70 backdrop-blur-[20px] border-b border-gray-200 dark:border-gray-700 z-20 flex items-center justify-between">
-        <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="p-2 -ml-2 text-gray-800 dark:text-gray-200">
-          <ChevronLeft size={28} />
-        </motion.button>
-        <div className="flex flex-col items-center">
+        {!isDesktop && (
+          <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="p-2 -ml-2 text-gray-800 dark:text-gray-200">
+            <ChevronLeft size={28} />
+          </motion.button>
+        )}
+        <div className={`flex flex-col ${isDesktop ? 'items-start ml-2' : 'items-center'}`}>
           <h2 className="font-semibold text-[17px] text-gray-800 dark:text-gray-100">{agentInfo ? `${agentInfo.identityEmoji || '🤖'} ${agentInfo.name}` : agentId || 'OpenClaw Bot'}</h2>
           <span className={`text-[11px] font-medium flex items-center gap-1 ${
             wsStatus === 'connected' ? 'text-[#67B88B]' : wsStatus === 'connecting' || wsStatus === 'reconnecting' ? 'text-amber-500' : 'text-red-400'
@@ -527,7 +529,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-32 flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-4 flex flex-col gap-4">
         {messages.map((msg, i) => {
           const isUser = msg.sender === 'user';
           const prevMsg = i > 0 ? messages[i - 1] : null;
@@ -719,7 +721,7 @@ export default function ChatRoom({ agentId, onBack }: { agentId?: string | null;
       </div>
 
       {/* Input Area */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-50 via-gray-50 dark:from-gray-900 dark:via-gray-900 to-transparent z-30">
+      <div className="p-4 bg-gradient-to-t from-gray-50 via-gray-50 dark:from-gray-900 dark:via-gray-900 to-transparent z-30 flex-shrink-0">
         <AnimatePresence>
           {showSlashMenu && (
             <>

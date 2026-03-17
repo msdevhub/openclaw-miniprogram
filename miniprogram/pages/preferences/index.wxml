@@ -1,4 +1,4 @@
-<view class="shell-page">
+<view class="shell-page {{darkMode ? 'dark-mode' : ''}}">
   <view class="screen">
     <view class="screen-header screen-header--chat" style="padding-top: {{navBarPaddingTop}}px; min-height: {{navBarHeight}}px;">
       <view class="nav-side-slot" style="width: {{navSideSlotWidth}}px;">

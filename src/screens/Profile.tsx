@@ -67,7 +67,7 @@ export default function Profile({ onNavigate }: { onNavigate: (screen: string) =
   };
 
   return (
-    <div className="flex flex-col h-full pb-32 px-6 pt-12 overflow-y-auto">
+    <div className="flex flex-col h-full pb-32 px-6 pt-12 overflow-y-auto max-w-2xl mx-auto w-full">
       <h1 className="text-3xl font-bold tracking-tight mb-8">Profile</h1>
 
       <div className="flex items-center gap-5 mb-8">

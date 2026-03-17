@@ -47,7 +47,7 @@ Page({
   },
 
   onShow() {
-    this.setData({ navItems: getNavItems(getTotalUnread()) });
+    this.setData({ navItems: getNavItems(getTotalUnread()), darkMode: getPageChromeData().darkMode });
     // Only fetch from server on first show or manual refresh
     if (!this._hasFetched) {
       this.connectAndFetchAgents();

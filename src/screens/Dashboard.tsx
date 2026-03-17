@@ -97,7 +97,7 @@ export default function Dashboard() {
   }, [activeConn?.id]);
 
   return (
-    <div className="flex flex-col h-full pb-32 px-6 pt-12">
+    <div className="flex flex-col h-full pb-32 px-6 pt-12 max-w-4xl mx-auto w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Resources</h1>
         <div className="flex items-center gap-2">

@@ -8,7 +8,16 @@ const DEFAULT_PAGE_CHROME = {
   navSideSlotWidth: 88,
   capsuleSafeInsetRight: 88,
   contentTopInset: 84,
+  darkMode: false,
 };
+
+function isDarkMode() {
+  try {
+    return wx.getStorageSync('openclaw.darkMode') === '1';
+  } catch (e) {
+    return false;
+  }
+}
 
 function getPageChromeData() {
   const systemInfo = wx.getSystemInfoSync ? wx.getSystemInfoSync() : {};
@@ -41,10 +50,12 @@ function getPageChromeData() {
     navSideSlotWidth,
     capsuleSafeInsetRight,
     contentTopInset,
+    darkMode: isDarkMode(),
   };
 }
 
 module.exports = {
   DEFAULT_PAGE_CHROME,
   getPageChromeData,
+  isDarkMode,
 };

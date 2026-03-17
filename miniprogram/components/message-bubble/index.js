@@ -66,5 +66,14 @@ Component({
         wx.showToast({ title: 'Link copied', icon: 'none' });
       }
     },
+    handleEditTap() {
+      this.triggerEvent('editmsg', { messageId: this.properties.message.id });
+    },
+    handleDeleteTap() {
+      this.triggerEvent('deletemsg', { messageId: this.properties.message.id });
+    },
+    handleReplyTap() {
+      this.triggerEvent('replymsg', { messageId: this.properties.message.id });
+    },
   },
 });

@@ -101,8 +101,19 @@
         </view>
       </view>
 
-      <view wx:if="{{isActive}}" class="message-action" bindtap="handleReactionTap" hover-class="message-action--pressed">
-        <oc-icon name="smile-plus" tone="dark" size="30rpx" />
+      <view wx:if="{{isActive}}" class="message-actions-row {{message.sender === 'user' ? 'message-actions-row--user' : 'message-actions-row--ai'}}">
+        <view class="message-action" bindtap="handleReplyTap" hover-class="message-action--pressed">
+          <text class="message-action__icon">↩</text>
+        </view>
+        <view class="message-action" bindtap="handleReactionTap" hover-class="message-action--pressed">
+          <oc-icon name="smile-plus" tone="dark" size="30rpx" />
+        </view>
+        <view wx:if="{{message.sender === 'user'}}" class="message-action" bindtap="handleEditTap" hover-class="message-action--pressed">
+          <text class="message-action__icon">✎</text>
+        </view>
+        <view class="message-action message-action--danger" bindtap="handleDeleteTap" hover-class="message-action--pressed">
+          <text class="message-action__icon">🗑</text>
+        </view>
       </view>
     </view>
 

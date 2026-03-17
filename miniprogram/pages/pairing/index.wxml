@@ -1,4 +1,4 @@
-<view class="shell-page">
+<view class="shell-page {{darkMode ? 'dark-mode' : ''}}">
   <view class="screen">
     <view class="screen-header screen-header--chat" style="padding-top: {{navBarPaddingTop}}px; min-height: {{navBarHeight}}px;">
       <view class="nav-side-slot" style="width: {{navSideSlotWidth}}px;">
@@ -7,7 +7,7 @@
         </view>
       </view>
       <view class="screen-header__center">
-        <text class="screen-header__title">Pairing</text>
+        <text class="screen-header__title">Connect Server</text>
       </view>
       <view class="nav-side-slot nav-side-slot--end" style="width: {{navSideSlotWidth}}px;"></view>
     </view>
@@ -17,15 +17,69 @@
         <view class="pairing-hero">
           <view class="pairing-chip">
             <oc-icon name="server" tone="green" size="28rpx" />
-            <text>OpenClaw Pairing</text>
+            <text>OpenClaw Connect</text>
           </view>
           <text class="screen-title">Connect Workspace</text>
-          <text class="pairing-copy">
-            Set your Generic Channel endpoint first. After that, the agent list will reflect the paired OpenClaw workspace.
-          </text>
+          <text class="pairing-copy">Paste a URL, scan QR code, or configure manually</text>
         </view>
 
-        <view class="form-card">
+        <!-- Tab selector -->
+        <view class="pairing-tabs">
+          <view class="pairing-tab {{activeTab === 'url' ? 'pairing-tab--active' : ''}}" data-tab="url" bindtap="handleTabChange">
+            <oc-icon name="link" tone="{{activeTab === 'url' ? 'white' : 'dark'}}" size="26rpx" />
+            <text>URL</text>
+          </view>
+          <view class="pairing-tab {{activeTab === 'qr' ? 'pairing-tab--active' : ''}}" data-tab="qr" bindtap="handleTabChange">
+            <oc-icon name="search" tone="{{activeTab === 'qr' ? 'white' : 'dark'}}" size="26rpx" />
+            <text>Scan</text>
+          </view>
+          <view class="pairing-tab {{activeTab === 'manual' ? 'pairing-tab--active' : ''}}" data-tab="manual" bindtap="handleTabChange">
+            <oc-icon name="settings" tone="{{activeTab === 'manual' ? 'white' : 'dark'}}" size="26rpx" />
+            <text>Manual</text>
+          </view>
+        </view>
+
+        <!-- Error -->
+        <text wx:if="{{urlError}}" class="pairing-error">{{urlError}}</text>
+
+        <!-- URL Tab -->
+        <view wx:if="{{activeTab === 'url'}}" class="form-card">
+          <view class="form-field">
+            <text class="form-label">Connection URL</text>
+            <view class="form-input-group">
+              <input
+                class="form-input form-input--with-action"
+                value="{{urlInput}}"
+                bindinput="handleUrlInput"
+                placeholder="ws://host:18080/ws?chatId=xxx&token=xxx"
+                placeholder-style="color: rgba(45, 52, 54, 0.35);"
+              />
+              <view class="form-input-action" bindtap="handlePasteUrl" hover-class="button-pressed">
+                <text class="form-input-action__text">📋</text>
+              </view>
+            </view>
+          </view>
+          <text class="pairing-url-hint">Supports: ws:// / wss:// with query params, or openclaw://connect?serverUrl=...&token=...</text>
+
+          <view class="primary-button primary-button--save" bindtap="handleUrlLogin" hover-class="button-pressed">
+            <text class="primary-button__label">Connect</text>
+            <oc-icon name="arrow-right" tone="white" size="32rpx" />
+          </view>
+        </view>
+
+        <!-- QR Tab -->
+        <view wx:elif="{{activeTab === 'qr'}}" class="form-card pairing-qr-card">
+          <view class="pairing-qr-hero">
+            <oc-icon name="search" tone="dark" size="80rpx" />
+            <text class="pairing-qr-desc">Scan a server QR code to connect instantly</text>
+          </view>
+          <view class="primary-button primary-button--save" bindtap="handleScanQR" hover-class="button-pressed">
+            <text class="primary-button__label">Open Scanner</text>
+          </view>
+        </view>
+
+        <!-- Manual Tab -->
+        <view wx:elif="{{activeTab === 'manual'}}" class="form-card">
           <view class="form-field">
             <text class="form-label">Display Name</text>
             <input class="form-input" value="{{preferenceForm.displayName}}" data-field="displayName" bindinput="handleInput" />
@@ -78,16 +132,11 @@
               placeholder-style="color: rgba(45, 52, 54, 0.35);"
             />
           </view>
-        </view>
 
-        <view class="pairing-note">
-          <text class="pairing-note__title">Current test environment</text>
-          <text class="pairing-note__desc">Use your own endpoint here. For real-device WeChat tests, switch to a valid `wss://` domain.</text>
-        </view>
-
-        <view class="primary-button primary-button--save" bindtap="handlePairConnection" hover-class="button-pressed">
-          <text class="primary-button__label">Pair and Continue</text>
-          <oc-icon name="arrow-right" tone="white" size="32rpx" />
+          <view class="primary-button primary-button--save" bindtap="handlePairConnection" hover-class="button-pressed">
+            <text class="primary-button__label">Pair and Continue</text>
+            <oc-icon name="arrow-right" tone="white" size="32rpx" />
+          </view>
         </view>
       </view>
     </scroll-view>

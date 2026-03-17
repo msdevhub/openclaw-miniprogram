@@ -4,6 +4,7 @@ import { Search, Bot, Server, WifiOff, Loader2, RefreshCw } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { cn } from '../lib/utils';
 import { getActiveConnection } from '../services/connectionStore';
 import * as channel from '../services/clawChannel';
 import type { AgentInfo } from '../services/clawChannel';
@@ -16,7 +17,7 @@ function loadCachedAgents(): AgentInfo[] {
   } catch { return []; }
 }
 
-export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (agentId: string) => void; onAddServer: () => void }) {
+export default function ChatList({ onOpenChat, onAddServer, compact, activeAgentId }: { onOpenChat: (agentId: string) => void; onAddServer: () => void; compact?: boolean; activeAgentId?: string | null }) {
   const [searchQuery, setSearchQuery] = useState('');
   const cached = loadCachedAgents();
   const [agents, setAgents] = useState<AgentInfo[]>(cached);
@@ -105,9 +106,9 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
   // No active server
   if (!activeConn) {
     return (
-      <div className="flex flex-col h-full pb-32">
-        <div className="px-6 pt-12 pb-4">
-          <h1 className="text-3xl font-bold tracking-tight mb-6">Chats</h1>
+      <div className={cn("flex flex-col h-full", !compact && "pb-32")}>
+        <div className={cn("px-6 pb-4", compact ? "pt-4" : "pt-12")}>
+          {!compact && <h1 className="text-3xl font-bold tracking-tight mb-6">Chats</h1>}
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
           <div className="w-16 h-16 bg-[#EDF2F0] dark:bg-[#2d3748] rounded-full flex items-center justify-center mb-4">
@@ -124,11 +125,17 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
   }
 
   return (
-    <div className="flex flex-col h-full pb-32">
-      <div className="px-6 pt-12 pb-4 sticky top-0 bg-[#F8FAFB]/80 dark:bg-[#1a1b2e]/80 backdrop-blur-xl z-10">
+    <div className={cn("flex flex-col h-full", !compact && "pb-32")}>
+      <div className={cn(
+        "sticky top-0 bg-[#F8FAFB]/80 dark:bg-[#1a1b2e]/80 backdrop-blur-xl z-10",
+        compact ? "px-4 pt-3 pb-3" : "px-6 pt-12 pb-4"
+      )}>
         <div className="flex justify-between items-center mb-2">
-          <h1 className="text-3xl font-bold tracking-tight">Chats</h1>
-          <div className="flex items-center gap-2">
+          {!compact && <h1 className="text-3xl font-bold tracking-tight">Chats</h1>}
+          <div className={cn("flex items-center gap-2", compact && "w-full")}>
+            {compact && (
+              <span className="font-semibold text-[15px] flex-1 truncate">{activeConn.name}</span>
+            )}
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => { hasFetched.current = false; fetchAgents(); }}
@@ -137,30 +144,32 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
               <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
             </motion.button>
             <Badge variant={wsStatus === 'connected' ? 'success' : 'warning'} className="text-[11px]">
-              {wsStatus === 'connected' ? activeConn.name : wsStatus === 'connecting' ? 'Connecting…' : 'Offline'}
+              {wsStatus === 'connected' ? (compact ? '●' : activeConn.name) : wsStatus === 'connecting' ? '…' : 'Offline'}
             </Badge>
           </div>
         </div>
-        <p className="text-[12px] text-[#2D3436]/40 dark:text-[#e2e8f0]/40 mb-4 truncate">{activeConn.serverUrl}</p>
+        {!compact && <p className="text-[12px] text-[#2D3436]/40 dark:text-[#e2e8f0]/40 mb-4 truncate">{activeConn.serverUrl}</p>}
 
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#2D3436]/40 dark:text-[#e2e8f0]/40" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#2D3436]/40 dark:text-[#e2e8f0]/40" size={compact ? 16 : 20} />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search agents..."
-            className="pl-12 rounded-full bg-white dark:bg-[#232437]"
+            className={cn("pl-12 rounded-full bg-white dark:bg-[#232437]", compact && "pl-10 py-1.5 text-[13px]")}
           />
         </div>
       </div>
 
-      <div className="px-4 flex flex-col gap-2">
+      <div className={cn("flex flex-col gap-2", compact ? "px-2" : "px-4")}>
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16">
             <Loader2 size={28} className="text-[#67B88B] animate-spin mb-3" />
             <p className="text-[#2D3436]/40 dark:text-[#e2e8f0]/40 text-[14px]">Loading agents…</p>
           </div>
-        ) : filtered.length > 0 ? filtered.map((agent, index) => (
+        ) : filtered.length > 0 ? filtered.map((agent, index) => {
+          const isActive = compact && activeAgentId === agent.id;
+          return (
           <motion.div
             key={agent.id}
             initial={{ opacity: 0, y: 20 }}
@@ -168,22 +177,32 @@ export default function ChatList({ onOpenChat, onAddServer }: { onOpenChat: (age
             transition={{ delay: index * 0.05 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onOpenChat(agent.id)}
-            className="bg-white dark:bg-[#232437] p-4 rounded-[24px] flex items-center gap-4 shadow-sm border border-[#EDF2F0]/50 dark:border-[#2d3748]/50 cursor-pointer"
+            className={cn(
+              "bg-white dark:bg-[#232437] rounded-[24px] flex items-center gap-4 shadow-sm border cursor-pointer transition-colors",
+              compact ? "p-3 rounded-[16px] gap-3" : "p-4",
+              isActive
+                ? "border-[#67B88B] bg-[#67B88B]/5 dark:bg-[#67B88B]/10"
+                : "border-[#EDF2F0]/50 dark:border-[#2d3748]/50 hover:border-[#67B88B]/30"
+            )}
           >
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#67B88B] to-[#4a9a70] flex-shrink-0 flex items-center justify-center text-white shadow-sm text-2xl">
-              {agent.identityEmoji || <Bot size={24} />}
+            <div className={cn(
+              "rounded-full bg-gradient-to-br from-[#67B88B] to-[#4a9a70] flex-shrink-0 flex items-center justify-center text-white shadow-sm",
+              compact ? "w-10 h-10 text-lg" : "w-14 h-14 text-2xl"
+            )}>
+              {agent.identityEmoji || <Bot size={compact ? 18 : 24} />}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-[16px] truncate">{agent.name}</h3>
+              <div className="flex items-center gap-2 mb-0.5">
+                <h3 className={cn("font-semibold truncate", compact ? "text-[14px]" : "text-[16px]")}>{agent.name}</h3>
                 {agent.isDefault && (
                   <Badge className="text-[10px]">default</Badge>
                 )}
               </div>
-              <p className="text-[13px] text-[#2D3436]/40 dark:text-[#e2e8f0]/40 truncate">{agent.model || `Agent: ${agent.id}`}</p>
+              <p className={cn("text-[#2D3436]/40 dark:text-[#e2e8f0]/40 truncate", compact ? "text-[12px]" : "text-[13px]")}>{agent.model || `Agent: ${agent.id}`}</p>
             </div>
           </motion.div>
-        )) : (
+          );
+        }) : (
           <div className="text-center text-[#2D3436]/40 dark:text-[#e2e8f0]/40 mt-10">No agents found</div>
         )}
       </div>

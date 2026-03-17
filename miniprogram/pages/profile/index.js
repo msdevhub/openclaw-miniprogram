@@ -55,6 +55,39 @@ Page({
 
   handleToggleSetting(event) {
     const { key } = event.detail;
+
+    // Dark mode toggle — persist and update page
+    if (key === 'darkMode') {
+      var nextDark = !isDarkMode();
+      try { wx.setStorageSync('openclaw.darkMode', nextDark ? '1' : '0'); } catch (e) {}
+      toggleProfileGroupSetting(key);
+      this.setData({
+        profileGroups: getProfileGroups(),
+        darkMode: nextDark,
+      });
+      return;
+    }
+
+    // Push notifications toggle
+    if (key === 'pushNotifications') {
+      var current = wx.getStorageSync('openclaw.pushNotif');
+      var nextPush = current === '0' ? '1' : '0';
+      try { wx.setStorageSync('openclaw.pushNotif', nextPush); } catch (e) {}
+      toggleProfileGroupSetting(key);
+      this.setData({ profileGroups: getProfileGroups() });
+      return;
+    }
+
+    // In-app notifications toggle
+    if (key === 'inAppNotifications') {
+      var currentInApp = wx.getStorageSync('openclaw.inAppNotif');
+      var nextInApp = currentInApp === '0' ? '1' : '0';
+      try { wx.setStorageSync('openclaw.inAppNotif', nextInApp); } catch (e) {}
+      toggleProfileGroupSetting(key);
+      this.setData({ profileGroups: getProfileGroups() });
+      return;
+    }
+
     toggleProfileGroupSetting(key);
     this.setData({ profileGroups: getProfileGroups() });
   },

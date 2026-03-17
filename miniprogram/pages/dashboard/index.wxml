@@ -1,4 +1,4 @@
-<view class="shell-page">
+<view class="shell-page {{darkMode ? 'dark-mode' : ''}}">
   <view class="screen">
     <scroll-view class="screen-scroll screen-scroll--with-nav" scroll-y>
       <view class="dashboard-body" style="padding-top: {{contentTopInset}}px;">

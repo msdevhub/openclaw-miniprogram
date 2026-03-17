@@ -1,6 +1,11 @@
 const MESSAGE_TEMPLATE_IDS = [];
 
 function notifyForegroundMessage(title) {
+  // Check if in-app notifications are enabled
+  try {
+    if (wx.getStorageSync('openclaw.inAppNotif') === '0') return;
+  } catch (e) {}
+
   if (typeof wx.showToast === 'function') {
     wx.showToast({
       title: title || '收到新消息',

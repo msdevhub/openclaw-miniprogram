@@ -24,7 +24,7 @@ Page({
   },
 
   onShow() {
-    this.setData({ navItems: getNavItems(getTotalUnread()) });
+    this.setData({ navItems: getNavItems(getTotalUnread()), darkMode: getPageChromeData().darkMode });
     this.connectAndFetchStatus();
   },
 

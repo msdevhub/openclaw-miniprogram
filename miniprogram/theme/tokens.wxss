@@ -25,3 +25,26 @@ page {
   --shadow-floating: 0 26rpx 80rpx rgba(33, 52, 44, 0.14);
   --shadow-primary: 0 20rpx 52rpx rgba(103, 184, 139, 0.28);
 }
+
+/* Dark mode overrides — applied via .dark-mode class on shell-page */
+.dark-mode {
+  --color-surface: #1a1b2e;
+  --color-card: #232437;
+  --color-card-glass: rgba(35, 36, 55, 0.72);
+  --color-card-glass-strong: rgba(35, 36, 55, 0.82);
+  --color-text-primary: #e2e8f0;
+  --color-text-secondary: #a0aec0;
+  --color-text-muted: #718096;
+  --color-border: #2d3748;
+  --color-border-strong: #4a5568;
+  --shadow-card: 0 18rpx 40rpx rgba(0, 0, 0, 0.2);
+  --shadow-floating: 0 26rpx 80rpx rgba(0, 0, 0, 0.3);
+  --shadow-primary: 0 20rpx 52rpx rgba(103, 184, 139, 0.18);
+}
+
+.dark-mode page,
+.dark-mode .screen,
+.dark-mode .shell-page {
+  background-color: #1a1b2e;
+  color: #e2e8f0;
+}

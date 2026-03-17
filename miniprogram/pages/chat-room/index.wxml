@@ -1,4 +1,4 @@
-<view class="shell-page">
+<view class="shell-page {{darkMode ? 'dark-mode' : ''}}">
   <view class="screen screen--chat-room">
     <view class="screen-header screen-header--chat" style="padding-top: {{navBarPaddingTop}}px; min-height: {{navBarHeight}}px;">
       <view class="nav-side-slot" style="width: {{navSideSlotWidth}}px;">
@@ -42,6 +42,9 @@
               delay="{{index * 30}}"
               bindselect="handleBubbleSelect"
               bindreaction="handleOpenReactionPicker"
+              bindeditmsg="handleEditMessage"
+              binddeletemsg="handleDeleteMessage"
+              bindreplymsg="handleStartReply"
             />
           </block>
         </block>
@@ -76,6 +79,18 @@
               <view class="thinking-dot thinking-dot--3"></view>
             </view>
             <text class="thinking-text">{{thinkingText}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{peerTyping && !showThinkingIndicator}}" class="typing-indicator-row">
+          <view class="thinking-avatar">{{agentEmoji}}</view>
+          <view class="typing-indicator-bubble">
+            <view class="thinking-dots">
+              <view class="thinking-dot thinking-dot--1"></view>
+              <view class="thinking-dot thinking-dot--2"></view>
+              <view class="thinking-dot thinking-dot--3"></view>
+            </view>
+            <text class="typing-indicator-text">typing...</text>
           </view>
         </view>
 
@@ -127,8 +142,18 @@
         </view>
       </scroll-view>
 
+      <!-- Edit bar -->
+      <view wx:if="{{editingMsg}}" class="edit-bar">
+        <view class="edit-bar__indicator"></view>
+        <view class="edit-bar__content">
+          <text class="edit-bar__label">Editing message</text>
+          <text class="edit-bar__text">{{editingMsg.text}}</text>
+        </view>
+        <view class="edit-bar__close" bindtap="handleCancelEdit">✕</view>
+      </view>
+
       <!-- Reply bar -->
-      <view wx:if="{{replyingTo}}" class="reply-bar">
+      <view wx:elif="{{replyingTo}}" class="reply-bar">
         <view class="reply-bar__indicator"></view>
         <view class="reply-bar__content">
           <text class="reply-bar__label">Replying to {{replyingTo.sender === 'user' ? 'yourself' : 'Bot'}}</text>

@@ -39,7 +39,7 @@ export default function Search() {
   const results = useMemo(() => searchLocalMessages(query), [query]);
 
   return (
-    <div className="flex flex-col h-full pb-32 px-6 pt-12">
+    <div className="flex flex-col h-full pb-32 px-6 pt-12 max-w-2xl mx-auto w-full">
       <h1 className="text-3xl font-bold tracking-tight mb-6">Search</h1>
       
       <div className="relative mb-6">

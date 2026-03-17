@@ -170,7 +170,22 @@ function updatePreferenceForm(patch = {}) {
 }
 
 function getProfileGroups() {
-  return clone(ensureRuntime().profileGroups);
+  var groups = clone(ensureRuntime().profileGroups);
+  // Sync toggle states from storage
+  try {
+    var darkMode = wx.getStorageSync('openclaw.darkMode') === '1';
+    var pushNotif = wx.getStorageSync('openclaw.pushNotif') !== '0';
+    var inAppNotif = wx.getStorageSync('openclaw.inAppNotif') !== '0';
+    groups = groups.map(function (group) {
+      return group.map(function (item) {
+        if (item.key === 'darkMode') return Object.assign({}, item, { active: darkMode });
+        if (item.key === 'pushNotifications') return Object.assign({}, item, { active: pushNotif });
+        if (item.key === 'inAppNotifications') return Object.assign({}, item, { active: inAppNotif });
+        return item;
+      });
+    });
+  } catch (e) {}
+  return groups;
 }
 
 function toggleProfileGroupSetting(key) {

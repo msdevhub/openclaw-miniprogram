@@ -169,6 +169,10 @@ class GenericChannelClient {
 
       try {
         const packet = JSON.parse(response.data);
+        // Update chatId from server response (server may assign/override based on token)
+        if (packet.type === 'connection.open' && packet.data && packet.data.chatId) {
+          this.chatId = packet.data.chatId;
+        }
         if (typeof this.onEvent === 'function') {
           this.onEvent(packet);
         }

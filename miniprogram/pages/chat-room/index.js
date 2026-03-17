@@ -219,6 +219,8 @@ Page({
     activeBubbleId: '',
     chatScrollAnchor: '',
     replyingTo: null,
+    peerTyping: false,
+    editingMsg: null,
     slashCommandCatalog: clone(SLASH_COMMANDS),
     slashCommands: clone(SLASH_COMMANDS),
     emojiList: clone(EMOJI_LIST),
@@ -426,6 +428,39 @@ Page({
         }
         break;
       }
+      case 'typing': {
+        var td = packet.data || {};
+        if (td.senderId !== this.data.genericSenderId) {
+          this.setData({ peerTyping: !!td.isTyping });
+          if (td.isTyping) {
+            if (this._typingTimeout) clearTimeout(this._typingTimeout);
+            this._typingTimeout = setTimeout(() => {
+              this.setData({ peerTyping: false });
+            }, 5000);
+          }
+        }
+        break;
+      }
+      case 'message.edit': {
+        var ed = packet.data || {};
+        if (ed.messageId && ed.content) {
+          var editedMsgs = this.data.messages.map(function (m) {
+            return m.id === ed.messageId ? Object.assign({}, m, { text: ed.content }) : m;
+          });
+          this.syncMessages(editedMsgs);
+        }
+        break;
+      }
+      case 'message.delete': {
+        var dd = packet.data || {};
+        if (dd.messageId) {
+          var filteredMsgs = this.data.messages.filter(function (m) {
+            return m.id !== dd.messageId;
+          });
+          this.syncMessages(filteredMsgs);
+        }
+        break;
+      }
       default:
         break;
     }
@@ -460,7 +495,7 @@ Page({
 
     this.genericClient = createGenericChannelClient({
       serverUrl: activeConn.serverUrl,
-      chatId: this.data.activeConversationId,
+      chatId: activeConn.chatId || this.data.activeConversationId,
       chatType: 'direct',
       senderId: activeConn.senderId || connection.senderId,
       senderName: activeConn.displayName || connection.senderName,
@@ -512,6 +547,15 @@ Page({
       showEmojiPicker: shouldOpenSlash ? false : this.data.showEmojiPicker,
       reactingToMsgId: shouldOpenSlash ? '' : this.data.reactingToMsgId,
     });
+
+    // Send typing indicator (debounced)
+    if (inputValue.trim() && this.genericClient && this.genericClient.isOpen()) {
+      try { this.genericClient.sendTyping(true); } catch (e) {}
+      if (this._typingSendTimeout) clearTimeout(this._typingSendTimeout);
+      this._typingSendTimeout = setTimeout(() => {
+        try { if (this.genericClient) this.genericClient.sendTyping(false); } catch (e) {}
+      }, 3000);
+    }
   },
 
   submitTextMessage(value) {
@@ -559,6 +603,22 @@ Page({
   },
 
   handleSendMessage() {
+    // If editing, save the edit instead
+    if (this.data.editingMsg) {
+      var editText = (this.data.inputValue || '').trim();
+      if (!editText) return;
+      try {
+        if (this.genericClient && this.genericClient.isOpen()) {
+          this.genericClient.editMessage(this.data.editingMsg.id, editText);
+        }
+      } catch (e) {}
+      var editedMsgs = this.data.messages.map((m) =>
+        m.id === this.data.editingMsg.id ? Object.assign({}, m, { text: editText }) : m
+      );
+      this.syncMessages(editedMsgs);
+      this.setData({ editingMsg: null, inputValue: '' });
+      return;
+    }
     this.submitTextMessage(this.data.inputValue);
   },
 
@@ -767,10 +827,10 @@ Page({
   },
 
   handleStartReply(event) {
-    const msgId = event.currentTarget.dataset.msgId;
+    const msgId = event.currentTarget.dataset.msgId || (event.detail && event.detail.messageId);
     const msg = this.data.messages.find((m) => m.id === msgId);
     if (msg) {
-      this.setData({ replyingTo: msg });
+      this.setData({ replyingTo: msg, activeBubbleId: '' });
     }
   },
 
@@ -790,5 +850,43 @@ Page({
     if (command) {
       this.submitTextMessage(command);
     }
+  },
+
+  handleEditMessage(event) {
+    const msgId = event.currentTarget.dataset.msgId || (event.detail && event.detail.messageId);
+    const msg = this.data.messages.find(function (m) { return m.id === msgId; });
+    if (msg) {
+      this.setData({
+        editingMsg: msg,
+        inputValue: msg.text,
+      });
+    }
+  },
+
+  handleCancelEdit() {
+    this.setData({
+      editingMsg: null,
+      inputValue: '',
+    });
+  },
+
+  handleDeleteMessage(event) {
+    const msgId = event.currentTarget.dataset.msgId || (event.detail && event.detail.messageId);
+    if (!msgId) return;
+    wx.showModal({
+      title: 'Delete Message',
+      content: 'Are you sure you want to delete this message?',
+      success: (res) => {
+        if (res.confirm) {
+          try {
+            if (this.genericClient && this.genericClient.isOpen()) {
+              this.genericClient.deleteMessage(msgId);
+            }
+          } catch (e) {}
+          var filteredMsgs = this.data.messages.filter(function (m) { return m.id !== msgId; });
+          this.syncMessages(filteredMsgs);
+        }
+      },
+    });
   },
 });

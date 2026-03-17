@@ -17,6 +17,8 @@ import * as clawChannel from './services/clawChannel';
 import { useSwipeBack } from './hooks/useSwipeBack';
 import { usePWAUpdate } from './hooks/usePWAUpdate';
 import { useIOSPWA } from './hooks/useIOSPWA';
+import { cn } from './lib/utils';
+import { MessageCircle, LayoutDashboard, Search as SearchIcon, User, Settings } from 'lucide-react';
 
 export type Screen = 'onboarding' | 'chats' | 'chat_room' | 'dashboard' | 'profile' | 'search' | 'preferences' | 'pairing';
 
@@ -66,6 +68,24 @@ function pathToScreen(pathname: string): { screen: Screen; chatId?: string } {
   }
   return { screen: 'onboarding' };
 }
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)');
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+  return isDesktop;
+}
+
+const SIDEBAR_NAV_ITEMS = [
+  { id: 'chats', icon: MessageCircle, label: 'Chats' },
+  { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { id: 'search', icon: SearchIcon, label: 'Search' },
+  { id: 'profile', icon: User, label: 'Profile' },
+] as const;
 
 function AppShell() {
   const location = useLocation();
@@ -143,7 +163,101 @@ function AppShell() {
     }
   };
 
+  // For desktop: which screen to show in the main panel (not chat list, since it's in sidebar)
+  const renderDesktopMain = () => {
+    switch (currentScreen) {
+      case 'chat_room':
+        return <ChatRoom agentId={activeAgentId} onBack={() => navigate('chats')} isDesktop />;
+      case 'dashboard':
+        return <Dashboard />;
+      case 'profile':
+        return <Profile onNavigate={navigate} />;
+      case 'search':
+        return <Search />;
+      case 'preferences':
+        return <Preferences onBack={() => navigate('profile')} />;
+      case 'pairing':
+        return <Pairing onBack={() => navigate('profile')} onPaired={(connId) => { clawChannel.close(); localStorage.removeItem('openclaw.agentList'); localStorage.removeItem('openclaw.channelStatus'); setActiveConnectionId(connId); navigate('chats'); }} />;
+      case 'onboarding':
+        return <Onboarding onGetStarted={() => navigate('chats')} />;
+      default:
+        // Default: show a welcome/empty state
+        return (
+          <div className="flex flex-col items-center justify-center h-full text-center px-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-[#67B88B] to-[#4a9a70] rounded-3xl flex items-center justify-center mb-6 shadow-lg shadow-[#67B88B]/20">
+              <MessageCircle size={36} className="text-white" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">OpenClaw</h2>
+            <p className="text-[#2D3436]/40 dark:text-[#e2e8f0]/40 text-[15px]">Select a conversation from the sidebar to start chatting</p>
+          </div>
+        );
+    }
+  };
+
   const showBottomNav = ['chats', 'dashboard', 'profile', 'search'].includes(currentScreen);
+  const isDesktop = useIsDesktop();
+
+  // ---- Desktop layout: sidebar + main ----
+  if (isDesktop && currentScreen !== 'onboarding') {
+    return (
+      <div className="flex w-full h-[100dvh] bg-[#F8FAFB] dark:bg-[#1a1b2e] text-[#2D3436] dark:text-[#e2e8f0] overflow-hidden font-sans">
+        {/* Sidebar */}
+        <div className="w-80 xl:w-96 h-full flex flex-col border-r border-[#EDF2F0] dark:border-[#2d3748] bg-white/50 dark:bg-[#232437]/50 flex-shrink-0">
+          {/* Sidebar nav */}
+          <div className="flex items-center gap-1 px-3 py-3 border-b border-[#EDF2F0] dark:border-[#2d3748]">
+            {SIDEBAR_NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.id === 'chats'
+                ? (currentScreen === 'chats' || currentScreen === 'chat_room')
+                : currentScreen === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => navigate(item.id as Screen)}
+                  className={cn(
+                    'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[12px] font-medium transition-all',
+                    isActive ? 'bg-[#67B88B] text-white shadow-sm' : 'text-[#2D3436]/50 dark:text-[#e2e8f0]/40 hover:bg-[#F8FAFB] dark:hover:bg-[#1a1b2e]'
+                  )}
+                >
+                  <Icon size={16} />
+                  <span className="hidden xl:inline">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sidebar content: ChatList */}
+          <div className="flex-1 overflow-y-auto">
+            <ChatList
+              onOpenChat={(agentId) => navigate('chat_room', agentId)}
+              onAddServer={() => navigate('pairing')}
+              compact
+              activeAgentId={activeAgentId}
+            />
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="flex-1 h-full relative overflow-hidden">
+          <UpdateBanner isVisible={updateAvailable} onUpdate={applyUpdate} onDismiss={dismissUpdate} />
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={currentScreen + (activeAgentId || '')}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className={`absolute inset-0 ${currentScreen === 'chat_room' ? 'overflow-hidden' : 'overflow-y-auto'}`}
+            >
+              {renderDesktopMain()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Mobile layout (unchanged) ----
 
   return (
     <div className="relative w-full h-[100dvh] bg-[#F8FAFB] dark:bg-[#1a1b2e] text-[#2D3436] dark:text-[#e2e8f0] overflow-hidden flex justify-center font-sans">
@@ -166,11 +280,12 @@ function AppShell() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="absolute inset-0 overflow-y-auto"
+            className={`absolute inset-0 ${currentScreen === 'chat_room' ? 'overflow-hidden' : 'overflow-y-auto'}`}
           >
             {/* Inner motion.div: handles swipe-back drag (decoupled from transitions) */}
             <motion.div
               style={{ x: dragX }}
+              className={currentScreen === 'chat_room' ? 'h-full' : undefined}
             >
               {renderScreen()}
             </motion.div>

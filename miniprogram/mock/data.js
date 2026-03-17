@@ -30,9 +30,9 @@ const DASHBOARD_DATA = {
 const RECENT_SEARCHES = [];
 
 const QUICK_FILTERS = [
-  { id: 'chats', label: 'Chats', icon: 'message-square', tone: 'green' },
-  { id: 'files', label: 'Files', icon: 'file-text', tone: 'blue' },
-  { id: 'commands', label: 'Commands', icon: 'command', tone: 'purple' },
+  { id: 'commands', label: '/', icon: 'command', tone: 'purple' },
+  { id: 'images', label: '[Image]', icon: 'file-text', tone: 'blue' },
+  { id: 'voice', label: '[Voice]', icon: 'message-square', tone: 'green' },
 ];
 
 const PROFILE_GROUPS = [
