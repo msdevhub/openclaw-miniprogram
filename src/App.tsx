@@ -257,11 +257,11 @@ function AppShell() {
     );
   }
 
-  // ---- Mobile layout (unchanged) ----
+  // ---- Mobile layout ----
 
   return (
     <div className="relative w-full h-[100dvh] bg-[#F8FAFB] dark:bg-[#1a1b2e] text-[#2D3436] dark:text-[#e2e8f0] overflow-hidden flex justify-center font-sans">
-      <div className="w-full max-w-md h-full relative bg-[#F8FAFB] dark:bg-[#1a1b2e] shadow-2xl overflow-hidden">
+      <div className="w-full max-w-md h-full relative bg-[#F8FAFB] dark:bg-[#1a1b2e] shadow-2xl overflow-hidden mobile-app-container">
         {/* PWA Update Banner */}
         <UpdateBanner
           isVisible={updateAvailable}

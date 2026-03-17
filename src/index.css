@@ -67,7 +67,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: 0;
 }
 
 ::-webkit-scrollbar {
@@ -108,11 +108,9 @@ body {
   overflow: hidden;
 }
 
-/* PWA standalone mode adjustments */
-@media (display-mode: standalone) {
-  body {
-    padding-top: env(safe-area-inset-top);
-  }
+/* Safe area handling for mobile PWA */
+.mobile-app-container {
+  padding-top: max(12px, env(safe-area-inset-top));
 }
 
 /* Prevent iOS input zoom */
