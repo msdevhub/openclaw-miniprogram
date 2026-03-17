@@ -18,7 +18,7 @@ export default function BottomNav({ currentScreen, onNavigate }: BottomNavProps)
   ];
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-50 pb-6 px-6">
+    <div className="flex-shrink-0 px-6 pb-6">
       <GlassCard className="p-2 flex justify-between items-center px-6">
         {navItems.map((item) => {
           const isActive = currentScreen === item.id;

@@ -108,13 +108,7 @@ body {
   overflow: hidden;
 }
 
-/* PWA standalone mode adjustments */
-@media (display-mode: standalone) {
-  #root {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
+/* PWA standalone mode adjustments - handled in component level */
 
 /* Prevent iOS input zoom */
 input, select, textarea {
