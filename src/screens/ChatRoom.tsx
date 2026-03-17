@@ -506,7 +506,7 @@ export default function ChatRoom({ agentId, onBack, isDesktop }: { agentId?: str
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 relative">
       {/* Header */}
-      <div className="px-4 py-4 sticky top-0 bg-white/70 dark:bg-gray-800/70 backdrop-blur-[20px] border-b border-gray-200 dark:border-gray-700 z-20 flex items-center justify-between">
+      <div className="px-4 py-3 sticky top-0 bg-white/70 dark:bg-gray-800/70 backdrop-blur-[20px] border-b border-gray-200 dark:border-gray-700 z-20 flex items-center justify-between min-h-[57px]">
         {!isDesktop && (
           <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="p-2 -ml-2 text-gray-800 dark:text-gray-200">
             <ChevronLeft size={28} />

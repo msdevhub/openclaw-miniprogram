@@ -204,7 +204,7 @@ function AppShell() {
         {/* Sidebar */}
         <div className="w-80 xl:w-96 h-full flex flex-col border-r border-[#EDF2F0] dark:border-[#2d3748] bg-white/50 dark:bg-[#232437]/50 flex-shrink-0">
           {/* Sidebar nav */}
-          <div className="flex items-center gap-1 px-3 py-3 border-b border-[#EDF2F0] dark:border-[#2d3748]">
+          <div className="flex items-center gap-1 px-3 py-2.5 border-b border-[#EDF2F0] dark:border-[#2d3748] min-h-[57px]">
             {SIDEBAR_NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = item.id === 'chats'
