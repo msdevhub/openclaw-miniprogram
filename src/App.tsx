@@ -261,7 +261,7 @@ function AppShell() {
 
   return (
     <div className="relative w-full h-[100dvh] bg-[#F8FAFB] dark:bg-[#1a1b2e] text-[#2D3436] dark:text-[#e2e8f0] overflow-hidden flex justify-center font-sans">
-      <div className="w-full max-w-md h-full relative bg-[#F8FAFB] dark:bg-[#1a1b2e] shadow-2xl overflow-hidden flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="w-full max-w-md h-full relative bg-[#F8FAFB] dark:bg-[#1a1b2e] shadow-2xl overflow-hidden mobile-app-container">
         {/* PWA Update Banner */}
         <UpdateBanner
           isVisible={updateAvailable}
@@ -281,7 +281,6 @@ function AppShell() {
             exit={{ opacity: 0, x: -40 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className={`absolute inset-0 ${currentScreen === 'chat_room' ? 'overflow-hidden' : 'overflow-y-auto'}`}
-            style={{ top: 'env(safe-area-inset-top)', bottom: showBottomNav ? 'auto' : 'env(safe-area-inset-bottom)' }}
           >
             {/* Inner motion.div: handles swipe-back drag (decoupled from transitions) */}
             <motion.div
